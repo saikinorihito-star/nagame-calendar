@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "races": [
+    {
+      "date": "2026-02-22",
+      "name": "フェブラリーステークス",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-03-29",
+      "name": "高松宮記念",
+      "venue": "中京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-04-05",
+      "name": "大阪杯",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-04-08",
+      "name": "川崎記念",
+      "venue": "川崎",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-04-12",
+      "name": "桜花賞",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-04-18",
+      "name": "中山グランドジャンプ",
+      "venue": "中山",
+      "category": "central",
+      "grade": "J・GⅠ"
+    },
+    {
+      "date": "2026-04-19",
+      "name": "皐月賞",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-04-29",
+      "name": "羽田盃",
+      "venue": "大井",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-05-03",
+      "name": "天皇賞（春）",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-05-05",
+      "name": "かしわ記念",
+      "venue": "船橋",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-05-10",
+      "name": "NHKマイルカップ",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-05-17",
+      "name": "ヴィクトリアマイル",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-05-24",
+      "name": "オークス",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-05-31",
+      "name": "日本ダービー",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-06-07",
+      "name": "安田記念",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-06-10",
+      "name": "東京ダービー",
+      "venue": "大井",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-06-14",
+      "name": "宝塚記念",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-06-24",
+      "name": "さきたま杯",
+      "venue": "浦和",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-07-01",
+      "name": "帝王賞",
+      "venue": "大井",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-09-27",
+      "name": "スプリンターズステークス",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-10-07",
+      "name": "ジャパンダートクラシック",
+      "venue": "大井",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-10-12",
+      "name": "マイルチャンピオンシップ南部杯",
+      "venue": "盛岡",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-10-18",
+      "name": "秋華賞",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-10-25",
+      "name": "菊花賞",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-11-01",
+      "name": "天皇賞（秋）",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-11-03",
+      "name": "JBCクラシック",
+      "venue": "金沢",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-11-03",
+      "name": "JBCスプリント",
+      "venue": "金沢",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-11-03",
+      "name": "JBCレディスクラシック",
+      "venue": "金沢",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-11-15",
+      "name": "エリザベス女王杯",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-11-22",
+      "name": "マイルチャンピオンシップ",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-11-29",
+      "name": "ジャパンカップ",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-06",
+      "name": "チャンピオンズカップ",
+      "venue": "中京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-13",
+      "name": "阪神ジュベナイルフィリーズ",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-16",
+      "name": "全日本2歳優駿",
+      "venue": "川崎",
+      "category": "local",
+      "grade": "JpnⅠ"
+    },
+    {
+      "date": "2026-12-20",
+      "name": "朝日杯フューチュリティステークス",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-26",
+      "name": "ホープフルステークス",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-26",
+      "name": "中山大障害",
+      "venue": "中山",
+      "category": "central",
+      "grade": "J・GⅠ"
+    },
+    {
+      "date": "2026-12-27",
+      "name": "有馬記念",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2026-12-29",
+      "name": "東京大賞典",
+      "venue": "大井",
+      "category": "local",
+      "grade": "GⅠ"
+    }
+  ]
+}

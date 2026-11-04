@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ながめるカレンダー">
+  <meta name="description" content="月を上下にスクロールして、予定を1タップで入力できるカレンダー">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>ながめるカレンダー</title>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="app-header">
+      <div class="brandline"><span class="brand-mark" aria-hidden="true">▦</span><span>ながめるカレンダー</span></div>
+      <div class="toolbar">
+        <div class="toolbar-title" id="visibleMonth">カレンダー</div>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn today-btn" id="todayBtn" type="button">今日</button>
+          <button class="toolbar-btn icon-btn" id="jumpBtn" type="button" aria-label="年月に移動" title="年月に移動">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>
+          </button>
+          <button class="toolbar-btn icon-btn" id="settingsBtn" type="button" aria-label="設定" title="設定">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z"/><path d="M19.2 13.4a7.5 7.5 0 0 0 0-2.8l1.6-1.2-1.6-2.8-1.9.7a7.7 7.7 0 0 0-2.4-1.4L14.6 4h-3.2l-.3 1.9a7.7 7.7 0 0 0-2.4 1.4l-1.9-.7-1.6 2.8 1.6 1.2a7.5 7.5 0 0 0 0 2.8l-1.6 1.2 1.6 2.8 1.9-.7a7.7 7.7 0 0 0 2.4 1.4l.3 1.9h3.2l.3-1.9a7.7 7.7 0 0 0 2.4-1.4l1.9.7 1.6-2.8-1.6-1.2Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main class="scroll-area" id="scrollArea" aria-label="月ごとのカレンダー">
+      <div class="tip" id="startTip">日付をタップすると予定を入力できます。月は上下にスクロールできます。</div>
+      <div id="months" class="months"></div>
+      <div class="scroll-ending" id="scrollEnding">上下にスクロールすると月が続きます</div>
+    </main>
+    <button class="floating-add" id="quickAddBtn" type="button" aria-label="今日の予定を追加"><span>＋</span><span class="floating-add-label">今日に追加</span></button>
+  </div>
+
+  <div class="overlay hidden" id="dayOverlay" role="presentation">
+    <div class="shade" data-close="day"></div>
+    <section class="sheet day-sheet" role="dialog" aria-modal="true" aria-labelledby="dayHeading">
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <div><div class="sheet-eyebrow">予定を登録</div><h2 id="dayHeading">日付</h2><div class="date-holiday" id="dayHoliday"></div></div>
+        <button type="button" class="close-btn" data-close="day" aria-label="閉じる">×</button>
+      </div>
+      <div class="day-sheet-body">
+        <div id="raceDetails" class="race-details hidden"></div>
+        <div id="existingWrap" class="existing-wrap hidden"><div class="section-heading">登録済みの予定</div><div id="existingEvents" class="existing-events"></div></div>
+        <div id="quickWrap"><div class="section-heading">いつもの予定 <span class="section-hint">1タップで登録</span></div><div class="template-buttons" id="quickTemplates"></div></div>
+        <form id="eventForm" autocomplete="off">
+          <div class="section-heading" id="formHeading">新しい予定を入力</div>
+          <label class="sr-only" for="eventTitle">予定名</label>
+          <input id="eventTitle" name="title" class="text-input" type="text" placeholder="予定名を入力（例：買い物）" maxlength="80" required>
+          <div class="form-group"><div class="small-label">色</div><div class="palette" id="eventPalette" role="group" aria-label="予定の色"></div></div>
+          <div class="event-extras">
+            <label class="time-row"><input id="useTime" type="checkbox"><span>時刻を入れる</span></label>
+            <input id="eventTime" type="time" class="time-input hidden" value="09:00" aria-label="予定の時刻">
+          </div>
+          <div class="repeat-block" id="repeatBlock"><label for="repeatMode" class="small-label">繰り返し登録</label><select id="repeatMode" class="select-input"><option value="none">なし</option><option value="daily7">毎日・7回</option><option value="weekly4">毎週・4回</option><option value="weekly12">毎週・12回</option><option value="monthly6">毎月・6回</option></select></div>
+          <div class="form-actions"><button class="save-btn" id="saveEventBtn" type="submit">予定を登録</button><button class="delete-btn hidden" id="deleteEventBtn" type="button">この予定を削除</button><button class="ghost-btn hidden" id="cancelEditBtn" type="button">編集をやめる</button></div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay hidden" id="settingsOverlay" role="presentation">
+    <div class="shade" data-close="settings"></div>
+    <section class="sheet settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-header"><div><div class="sheet-eyebrow">カスタマイズ</div><h2 id="settingsHeading">設定</h2></div><button type="button" class="close-btn" data-close="settings" aria-label="閉じる">×</button></div>
+      <div class="settings-body">
+        <h3>よく使う予定</h3><p class="explain">登録したボタンを押すだけで、選んだ日に予定を入力できます。並び順も変更できます。</p>
+        <div id="templateList" class="template-list"></div>
+        <form id="templateForm" class="template-form"><label class="small-label" for="templateTitle">登録ボタンを追加・編集</label><input id="templateTitle" class="text-input" maxlength="40" required placeholder="例：夜勤、ジム、休み"><div class="palette" id="templatePalette" role="group" aria-label="ボタンの色"></div><div class="form-actions"><button type="submit" class="save-btn" id="saveTemplateBtn">ボタンを追加</button><button type="button" class="ghost-btn hidden" id="cancelTemplateBtn">キャンセル</button></div></form>
+        <div class="settings-divider"></div>
+        <h3>予定データのバックアップ</h3><p class="explain">予定はこの端末のブラウザ内に保存されます。機種変更・ブラウザデータ削除に備え、バックアップを保存してください。</p>
+        <div class="backup-actions"><button type="button" class="secondary-btn" id="exportBtn">バックアップを保存</button><button type="button" class="secondary-btn" id="importBtn">バックアップを読み込む</button><input class="hidden" id="importFile" type="file" accept=".json,application/json"></div>
+        <p class="notice">読み込み時は現在の予定・登録ボタンをバックアップの内容で置き換えます。別のiPhoneへの自動同期はありません。</p>
+        <div class="settings-divider"></div>
+        <h3>カレンダーに表示する内容</h3>
+        <p class="explain">自分で入力した予定とは別に、競馬のGⅠ開催日を表示できます。</p>
+        <label class="settings-switch"><span><strong>中央競馬 GⅠ</strong><small>JRAの平地GⅠ・障害J・GⅠ</small></span><input id="showCentral" type="checkbox" checked></label>
+        <label class="settings-switch"><span><strong>地方競馬 GⅠ・JpnⅠ</strong><small>東京大賞典、帝王賞、JBCなど</small></span><input id="showLocal" type="checkbox" checked></label>
+        <div class="settings-divider"></div>
+        <h3>祝日・競馬日程の自動更新</h3>
+        <p class="explain">インターネット接続時に最新の日程ファイルを確認します。GitHubで「自動更新」を一度設定すると、祝日は内閣府の正式公表後、競馬日程はJRA・地方競馬の公式日程公開後に更新を試みます。</p>
+        <div class="data-status" id="holidayStatus">祝日：収録済みデータを表示中</div>
+        <div class="data-status" id="raceStatus">競馬：収録済みデータを表示中</div>
+        <button type="button" class="secondary-btn refresh-data" id="refreshDataBtn">今すぐ日程を確認</button>
+        <p class="notice">通信できない場合は、保存済みの日程を使用します。未公表の日付は推測して表示しません。自動更新には付属のGitHub Actions設定が必要です。</p>
+        <p class="notice">公式資料：<a href="https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html" target="_blank" rel="noopener">内閣府（祝日）</a>／<a href="https://www.jra.go.jp/datafile/seiseki/replay/2026/g1.html" target="_blank" rel="noopener">JRA（中央GⅠ）</a>／<a href="https://www.keiba.go.jp/dirtgraderace/2026/rating/prerating/index.html" target="_blank" rel="noopener">地方競馬（GⅠ・JpnⅠ）</a></p>
+        <div class="settings-footer">ながめるカレンダー　v2.1</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay hidden" id="jumpOverlay" role="presentation"><div class="shade" data-close="jump"></div><section class="sheet jump-sheet" role="dialog" aria-modal="true" aria-labelledby="jumpHeading"><div class="sheet-grab" aria-hidden="true"></div><div class="sheet-header"><h2 id="jumpHeading">年月へ移動</h2><button type="button" class="close-btn" data-close="jump" aria-label="閉じる">×</button></div><form id="jumpForm" class="jump-body"><div class="jump-fields"><label>年<select id="jumpYear" class="select-input"></select></label><label>月<select id="jumpMonth" class="select-input"></select></label></div><button type="submit" class="save-btn">この月に移動</button></form></section></div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toastText"></span><button id="undoBtn" class="undo-btn hidden" type="button">取り消す</button></div>
+  <script src="./holidays.js"></script>
+  <script src="./races.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
