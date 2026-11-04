@@ -1,0 +1,64 @@
+
+name: カレンダー公開・祝日とG1競馬の自動更新
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: カレンダーのコードを取得
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Pythonを準備
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: HTML解析用ライブラリをインストール
+        run: python -m pip install 'beautifulsoup4>=4.12,<5'
+
+      - name: 祝日とレースの公式日程を確認
+        run: python scripts/update_official_data.py
+
+      - name: データに変更があればGitHubに記録
+        run: |
+          git add data/holidays.json data/races.json
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m '公式の祝日・G1競馬日程を更新'
+            git push
+          fi
+
+      - name: GitHub Pagesを準備
+        uses: actions/configure-pages@v5
+
+      - name: カレンダーを公開用にまとめる
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: カレンダーを公開・更新
+        id: deployment
+        uses: actions/deploy-pages@v4
