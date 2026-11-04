@@ -69,6 +69,17 @@
     const groups=new Set(incoming.map(x=>String(x.date||'').slice(0,4)+'/'+x.category));
     return previous.filter(x=>!groups.has(x.date.slice(0,4)+'/'+x.category)).concat(incoming);
   }
+  // 内容が同じ公開データなら再描画を行わず、スクロール位置を保持する。
+  function sameHolidayData(a,b){
+    const keys=Object.keys(a);
+    return keys.length===Object.keys(b).length && keys.every(k=>a[k]===b[k]);
+  }
+  function sameRaceData(a,b){
+    if(a.length!==b.length)return false;
+    const key=x=>[x.date,x.category,x.name,x.venue,x.grade].join('\u0001');
+    const left=a.map(key).sort(),right=b.map(key).sort();
+    return left.every((k,i)=>k===right[i]);
+  }
   function raceAt(day) {return RACES.filter(x=>x.date===day && display[x.category]);}
   function latestHolidayYear(){return Math.max(0,...Object.keys(HOLIDAYS).map(x=>Number(x.slice(0,4))));}
   function latestRaceYear(){return Math.max(0,...RACES.map(x=>Number(x.date.slice(0,4))));}
@@ -428,7 +439,7 @@
   }
   async function refreshOfficialData(manual=false){
     if(manual){el('refreshDataBtn').disabled=true;syncState='確認中';renderOfficialStatus();}
-    let fetched=0,changed=false;
+    let fetched=0,changed=false,cacheNeedsSave=false;
     try{
       const [h,r]=await Promise.allSettled([
         fetch('./data/holidays.json',{cache:'no-store'}).then(x=>{if(!x.ok)throw Error('祝日データの取得失敗');return x.json();}),
@@ -440,8 +451,11 @@
           fetched++;
           const newRevision=typeof h.value.updatedAt==='string'?h.value.updatedAt:'';
           if(newRevision>=holidayRevision){
-            HOLIDAYS=mergeHolidayYears(HOLIDAYS,h.value.holidays);
-            holidayRevision=newRevision;changed=true;
+            const merged=mergeHolidayYears(HOLIDAYS,h.value.holidays);
+            if(!sameHolidayData(HOLIDAYS,merged)){
+              HOLIDAYS=merged;changed=true;cacheNeedsSave=true;
+            }
+            if(holidayRevision!==newRevision){holidayRevision=newRevision;cacheNeedsSave=true;}
           }
         }
       }
@@ -451,14 +465,19 @@
           fetched++;
           const newRevision=typeof r.value.updatedAt==='string'?r.value.updatedAt:'';
           if(newRevision>=raceRevision){
-            RACES=mergeRaceYears(RACES,r.value.races);
-            raceRevision=newRevision;changed=true;
+            const merged=mergeRaceYears(RACES,r.value.races);
+            if(!sameRaceData(RACES,merged)){
+              RACES=merged;changed=true;cacheNeedsSave=true;
+            }
+            if(raceRevision!==newRevision){raceRevision=newRevision;cacheNeedsSave=true;}
           }
         }
       }
-      if(changed){
+      if(cacheNeedsSave){
         try{localStorage.setItem(OFFICIAL_KEY,JSON.stringify({holidays:HOLIDAYS,races:RACES,holidayRevision,raceRevision}));}
         catch(err){console.warn('公開日程のキャッシュ保存に失敗',err);}
+      }
+      if(changed){
         const oldTop=refs.scroll.scrollTop;buildCalendar();refs.scroll.scrollTop=oldTop;
         if(!refs.dayOverlay.classList.contains('hidden'))renderDay();
       }
