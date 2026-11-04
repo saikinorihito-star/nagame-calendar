@@ -169,17 +169,19 @@
       if(holiday)btn.append(make('span','holiday-label',holiday));
       const entries=byDay.get(key)||[];
       const races=raceAt(key);
-      const count=Math.min(2,entries.length);
+      // 登録済み予定を優先して3件まで表示し、残りの枠を競馬日程に使用する。
+      // 日付マスは内容に応じて高さが広がるため、3件目も隠さず表示できる。
+      const count=Math.min(3,entries.length);
       entries.slice(0,count).forEach(e=>{
         const pill=make('span','event-pill',(e.time?e.time+' ':'')+e.title);
         pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
       });
-      races.slice(0,2-count).forEach(r=>{
+      races.slice(0,3-count).forEach(r=>{
         const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
         pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
       });
       const allCount=entries.length+races.length;
-      if(allCount>2)btn.append(make('span','event-extra',`＋${allCount-2}件`));
+      if(allCount>3)btn.append(make('span','event-extra',`＋${allCount-3}件`));
       btn.addEventListener('click',()=>openDay(key));grid.append(btn);
     }
     section.append(grid);

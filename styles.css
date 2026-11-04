@@ -48,8 +48,12 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   box-shadow:0 0 36px rgba(31,49,83,.07)}
 .app-header {
   z-index:4;
-  background:rgba(255,255,255,.97);
+  background:#fff;
   border-bottom:1px solid var(--line);
+  /* 上部は不透明で描画し、薄い重なり・ぼかしを防ぐ。 */
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  opacity:1;
   padding-top:env(safe-area-inset-top)}
 .brandline {
   height:34px;
@@ -59,8 +63,8 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   padding:8px 20px 0;
   font-size:11px;
   letter-spacing:.09em;
-  font-weight:700;
-  color:#8390a5}
+  font-weight:750;
+  color:#34435f}
 .brand-mark {
   background:#294b90;
   color:white;
@@ -81,6 +85,9 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   font-size:23px;
   letter-spacing:-.04em;
   font-weight:800;
+  color:#20283d;
+  text-shadow:none;
+  opacity:1;
   white-space:nowrap}
 .toolbar-actions {
   display:flex;
@@ -812,7 +819,7 @@ button:focus-visible,input:focus-visible,select:focus-visible {
     gap:3px;
   }
   .day-number {
-    font-size:16px;
+    font-size:14px;
     font-weight:650;
   }
   .holiday-label {
@@ -852,6 +859,6 @@ button:focus-visible,input:focus-visible,select:focus-visible {
     font-size:9px;
   }
   .day-number {
-    font-size:15px;
+    font-size:14px;
   }
 }
