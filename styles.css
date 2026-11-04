@@ -16,3 +16,79 @@
 .race-details{margin-top:10px}
 .race-details .section-heading{margin-bottom:9px}
 @media (max-width:370px){.race-pill{font-size:8px}}
+/* カレンダー全体を少し大きくする */
+.app {
+  max-width: 980px;
+  width: min(980px, 100%);
+}
+
+/* 月のカードを広く見せる */
+.month-card {
+  padding: 20px;
+  border-radius: 22px;
+}
+
+/* 曜日行 */
+.weekdays,
+.calendar-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+/* 1日のマスを大きくする */
+.day-cell {
+  min-height: 128px;
+  padding: 10px 10px 8px;
+}
+
+/* 日付の数字を少し大きく */
+.day-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* 祝日・予定の文字を少し見やすく */
+.holiday-label,
+.event-chip,
+.race-chip {
+  font-size: 0.78rem;
+}
+
+/* 月タイトルも少し大きく */
+.month-title {
+  font-size: 2rem;
+}
+
+.month-subtitle {
+  font-size: 1rem;
+}
+
+/* iPhone向け */
+@media (max-width: 768px) {
+  .app {
+    max-width: 100%;
+  }
+
+  .month-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .day-cell {
+    min-height: 110px;
+    padding: 8px;
+  }
+
+  .day-number {
+    font-size: 1.15rem;
+  }
+
+  .holiday-label,
+  .event-chip,
+  .race-chip {
+    font-size: 0.72rem;
+  }
+
+  .month-title {
+    font-size: 1.7rem;
+  }
+}
