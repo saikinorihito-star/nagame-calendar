@@ -16,6 +16,29 @@
     {id:'default-appointment',title:'通院',color:'pink'},
     {id:'default-trip',title:'旅行',color:'purple'}
   ];
+
+  // 月表示のみ短縮。公式データと日付詳細は正式名称のまま。
+  const RACE_SHORT_NAMES = Object.freeze({
+    "フェブラリーステークス": "フェブラリー",
+    "中山グランドジャンプ": "中山GJ",
+    "NHKマイルカップ": "NHKマイル",
+    "ヴィクトリアマイル": "ヴィクトリア",
+    "スプリンターズステークス": "スプリンター",
+    "ジャパンダートクラシック": "JダートC",
+    "マイルチャンピオンシップ南部杯": "南部杯",
+    "JBCクラシック": "JBCクラ",
+    "JBCスプリント": "JBCスプ",
+    "JBCレディスクラシック": "JBCレディス",
+    "エリザベス女王杯": "エリザベス杯",
+    "マイルチャンピオンシップ": "マイルCS",
+    "ジャパンカップ": "ジャパンC",
+    "チャンピオンズカップ": "チャンピオン",
+    "阪神ジュベナイルフィリーズ": "阪神JF",
+    "全日本2歳優駿": "全日本2歳",
+    "朝日杯フューチュリティステークス": "朝日杯FS",
+    "ホープフルステークス": "ホープフルS"
+  });
+  const shortRaceName = name => RACE_SHORT_NAMES[name] ?? name;
   // 祝日・競馬日程は公開データと手元のキャッシュを組み合わせる。
   let HOLIDAYS = {...(window.CALENDAR_HOLIDAYS || {})};
   let RACES = [...(window.CALENDAR_RACES || [])];
@@ -152,7 +175,7 @@
         pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
       });
       races.slice(0,2-count).forEach(r=>{
-        const pill=make('span','race-pill'+(r.category==='local'?' local':''),r.name);
+        const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
         pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
       });
       const allCount=entries.length+races.length;
