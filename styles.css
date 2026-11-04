@@ -47,6 +47,10 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   margin:0 auto;
   box-shadow:0 0 36px rgba(31,49,83,.07)}
 .app-header {
+  /* PWA上端に常駐する不透明ヘッダーとしてWebKitに認識させる。 */
+  position:sticky;
+  top:0;
+  flex-shrink:0;
   z-index:4;
   background:#fff;
   border-bottom:1px solid var(--line);
@@ -860,5 +864,24 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   }
   .day-number {
     font-size:14px;
+  }
+}
+
+/* iOS 26/27系のホーム画面PWAでOSがヘッダーへ描くスクロール端の
+   プログレッシブブラーを抑制するための限定的な回避策。
+   空要素の背景をテキストだけにクリップするため画面上は透明、
+   操作も遮らず、ブラウザ版のレイアウトには影響しない。 */
+@media (display-mode:standalone) {
+  .ios-scroll-edge-guard {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:12px;
+    background-color:#f6f8fc;
+    -webkit-background-clip:text;
+    background-clip:text;
+    pointer-events:none;
+    z-index:30;
   }
 }
