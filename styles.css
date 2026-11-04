@@ -756,3 +756,102 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 
 .race-details .section-heading {
   margin-bottom:9px}
+
+/* モバイル月表示：上部の重複した見出しと余白を縮小。
+   日付・予定は参考画面に近い比率にし、タップ領域と縦スクロールを維持する。 */
+@media (max-width:619px) {
+  .brandline {
+    display:none;
+  }
+  .toolbar {
+    height:52px;
+    padding:4px 12px 5px;
+    gap:6px;
+  }
+  .toolbar-title {
+    font-size:22px;
+  }
+  .toolbar-actions {
+    gap:6px;
+  }
+  .toolbar-btn {
+    height:40px;
+    min-width:40px;
+    border-radius:11px;
+  }
+  .today-btn {
+    padding:0 10px;
+  }
+  .months {
+    padding:2px 3px 18px;
+  }
+  .month-card {
+    margin:4px 0 15px;
+    border-radius:12px;
+  }
+  .month-top {
+    padding:9px 10px 8px;
+    gap:6px;
+  }
+  .month-name {
+    font-size:21px;
+  }
+  .month-year {
+    margin-left:5px;
+    font-size:11px;
+  }
+  .month-count {
+    font-size:10px;
+  }
+  .weekday {
+    height:28px;
+    font-size:12px;
+  }
+  .day {
+    padding:6px 2px;
+    gap:3px;
+  }
+  .day-number {
+    font-size:16px;
+    font-weight:650;
+  }
+  .holiday-label {
+    font-size:11px;
+    line-height:1.35;
+  }
+  .event-pill {
+    font-size:12px;
+    line-height:1.4;
+    font-weight:700;
+  }
+  .race-pill {
+    font-size:11px;
+    line-height:1.4;
+  }
+}
+/* 片手操作のボタン幅を確保したまま、小型iPhoneでも見切れない設定 */
+@media (max-width:360px) {
+  .toolbar {
+    padding-left:9px;
+    padding-right:9px;
+    gap:4px;
+  }
+  .toolbar-title {
+    font-size:19px;
+  }
+  .toolbar-actions {
+    gap:4px;
+  }
+  .today-btn {
+    padding:0 8px;
+  }
+  .month-name {
+    font-size:20px;
+  }
+  .month-count {
+    font-size:9px;
+  }
+  .day-number {
+    font-size:15px;
+  }
+}
