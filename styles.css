@@ -92,3 +92,87 @@
     font-size: 1.7rem;
   }
 }
+
+/* カレンダー表示サイズの修正版 */
+
+/* カレンダーを横幅いっぱいに表示 */
+.app {
+  width: 100%;
+  max-width: 980px;
+}
+
+.months {
+  padding: 4px 7px 18px;
+}
+
+.month-card {
+  padding: 0;
+  border-radius: 16px;
+}
+
+/* 月のタイトル */
+.month-name {
+  font-size: 25px;
+}
+
+.month-top {
+  padding: 17px 14px;
+}
+
+/* 曜日 */
+.weekday {
+  height: 34px;
+  font-size: 13px;
+}
+
+/* 日付のマスを大きく */
+.day {
+  min-height: 125px;
+  padding: 8px 4px;
+  gap: 4px;
+}
+
+/* 日付の数字 */
+.day-number {
+  font-size: 18px;
+  width: 27px;
+  height: 27px;
+}
+
+/* 祝日 */
+.holiday-label {
+  font-size: 10px;
+}
+
+/* 登録した予定 */
+.event-pill {
+  font-size: 11px;
+  line-height: 18px;
+  min-height: 18px;
+}
+
+/* 中央・地方競馬 */
+.race-pill {
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* iPhone向け */
+@media (max-width: 600px) {
+  .months {
+    padding: 4px 5px 16px;
+  }
+
+  .day {
+    min-height: 112px;
+    padding: 7px 3px;
+  }
+
+  .day-number {
+    font-size: 17px;
+  }
+
+  .month-name {
+    font-size: 24px;
+  }
+}
