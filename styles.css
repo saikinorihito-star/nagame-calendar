@@ -180,7 +180,7 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   text-align:left;
   padding:7px 2px;
   min-width:0;
-  min-height:112px;
+  min-height:90px;
   display:flex;
   flex-direction:column;
   align-items:stretch;
@@ -642,7 +642,7 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 
 @media(min-width:620px) {
   .day {
-  min-height:125px;
+  min-height:100px;
   padding:8px 5px;
   gap:5px}
 .month-card {
