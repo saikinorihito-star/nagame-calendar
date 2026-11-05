@@ -1322,3 +1322,49 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   .market-input-row label {font-size:11px}
   .market-value-number {font-size:12px}
 }
+/* 外部提供元の無料日足チャートへのリンク。データは転載・保存しない。 */
+.market-free-links {
+  margin:12px 0 4px;
+}
+.market-free-links .market-hint {
+  margin:3px 0 7px;
+}
+.market-free-links-row {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+.market-free-links-row a {
+  min-width:0;
+  min-height:39px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:3px;
+  color:#285083;
+  background:#f5f8fd;
+  border:1px solid #dce5f2;
+  border-radius:9px;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.market-free-links-row a span {
+  font-size:10px;
+  color:#6981a8;
+}
+.market-free-links-row a:focus-visible {
+  outline:2px solid #7fa1d6;
+  outline-offset:2px;
+}
+.market-data-note {
+  margin:6px 1px;
+  color:#718099;
+  font-size:10px;
+  line-height:1.6;
+}
+@media(max-width:360px){
+  .market-free-links-row {gap:3px}
+  .market-free-links-row a {font-size:10px}
+}
