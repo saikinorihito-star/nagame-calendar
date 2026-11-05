@@ -32,10 +32,21 @@
           </button>
         </div>
       </div>
+      <nav class="view-switches" aria-label="カレンダー表示を切り替え">
+        <div class="view-segment" role="group" aria-label="予定と記録">
+          <button class="view-choice active" id="showPlansBtn" type="button" aria-pressed="true">予定</button>
+          <button class="view-choice" id="showRecordsBtn" type="button" aria-pressed="false">記録</button>
+        </div>
+        <div class="view-segment hidden" id="recordViewSwitch" role="group" aria-label="記録の表示方法">
+          <button class="view-choice active" id="calendarViewBtn" type="button" aria-pressed="true">カレンダー</button>
+          <button class="view-choice" id="titleViewBtn" type="button" aria-pressed="false">タイトル別</button>
+        </div>
+      </nav>
     </header>
     <main class="scroll-area" id="scrollArea" aria-label="月ごとのカレンダー">
-      <div class="tip" id="startTip">日付をタップすると予定を入力できます。月は上下にスクロールできます。</div>
+      <div class="tip" id="startTip">日付をタップすると予定を追加できます。月は上下にスクロールできます。</div>
       <div id="months" class="months"></div>
+      <section id="recordTitles" class="record-titles hidden" aria-label="タイトル別の記録一覧"></section>
       <div class="scroll-ending" id="scrollEnding">上下にスクロールすると月が続きます</div>
     </main>
     <button class="floating-add" id="quickAddBtn" type="button" aria-label="今日の予定を追加"><span>＋</span><span class="floating-add-label">今日に追加</span></button>
@@ -69,6 +80,36 @@
     </section>
   </div>
 
+  <div class="overlay hidden" id="recordOverlay" role="presentation">
+    <div class="shade" data-close="record"></div>
+    <section class="sheet day-sheet" role="dialog" aria-modal="true" aria-labelledby="recordHeading">
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <div><div class="sheet-eyebrow">日記・記録</div><h2 id="recordHeading">日付</h2></div>
+        <button type="button" class="close-btn" data-close="record" aria-label="閉じる">×</button>
+      </div>
+      <div class="day-sheet-body">
+        <div id="existingRecordsWrap" class="existing-wrap hidden">
+          <div class="section-heading">この日の記録</div>
+          <div id="existingRecords" class="existing-events"></div>
+        </div>
+        <form id="recordForm" autocomplete="off">
+          <div class="section-heading" id="recordFormHeading">新しい記録を入力</div>
+          <label class="small-label" for="recordTitle">タイトル</label>
+          <input id="recordTitle" class="text-input" type="text" maxlength="80" placeholder="例：読書、買い物、今日の出来事" required>
+          <label class="small-label record-body-label" for="recordBody">本文</label>
+          <textarea id="recordBody" class="record-body-input" maxlength="10000" rows="6" placeholder="自由に記録を書いてください"></textarea>
+          <div class="form-group"><div class="small-label">色</div><div class="palette" id="recordPalette" role="group" aria-label="記録の色"></div></div>
+          <div class="form-actions">
+            <button class="save-btn" id="saveRecordBtn" type="submit">記録を保存</button>
+            <button class="delete-btn hidden" id="deleteRecordBtn" type="button">この記録を削除</button>
+            <button class="ghost-btn hidden" id="cancelRecordEditBtn" type="button">編集をやめる</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
   <div class="overlay hidden" id="settingsOverlay" role="presentation">
     <div class="shade" data-close="settings"></div>
     <section class="sheet settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
@@ -79,9 +120,9 @@
         <div id="templateList" class="template-list"></div>
         <form id="templateForm" class="template-form"><label class="small-label" for="templateTitle">登録ボタンを追加・編集</label><input id="templateTitle" class="text-input" maxlength="40" required placeholder="例：夜勤、ジム、休み"><div class="palette" id="templatePalette" role="group" aria-label="ボタンの色"></div><div class="form-actions"><button type="submit" class="save-btn" id="saveTemplateBtn">ボタンを追加</button><button type="button" class="ghost-btn hidden" id="cancelTemplateBtn">キャンセル</button></div></form>
         <div class="settings-divider"></div>
-        <h3>予定データのバックアップ</h3><p class="explain">予定はこの端末のブラウザ内に保存されます。機種変更・ブラウザデータ削除に備え、バックアップを保存してください。</p>
+        <h3>予定・記録のバックアップ</h3><p class="explain">予定と日記・記録は、この端末のブラウザ内に保存されます。機種変更やデータ削除に備え、定期的にバックアップを保存してください。</p>
         <div class="backup-actions"><button type="button" class="secondary-btn" id="exportBtn">バックアップを保存</button><button type="button" class="secondary-btn" id="importBtn">バックアップを読み込む</button><input class="hidden" id="importFile" type="file" accept=".json,application/json"></div>
-        <p class="notice">読み込み時は現在の予定・登録ボタンをバックアップの内容で置き換えます。別のiPhoneへの自動同期はありません。</p>
+        <p class="notice">新しい形式のバックアップを読み込むと、予定・登録ボタン・記録が置き換わります。従来形式のバックアップは予定・登録ボタンのみ置き換え、現在の記録は保持します。別のiPhoneへの自動同期はありません。</p>
         <div class="settings-divider"></div>
         <h3>カレンダーに表示する内容</h3>
         <p class="explain">自分で入力した予定とは別に、競馬のGⅠ開催日を表示できます。</p>
@@ -95,7 +136,7 @@
         <button type="button" class="secondary-btn refresh-data" id="refreshDataBtn">今すぐ日程を確認</button>
         <p class="notice">通信できない場合は、保存済みの日程を使用します。未公表の日付は推測して表示しません。自動更新には付属のGitHub Actions設定が必要です。</p>
         <p class="notice">公式資料：<a href="https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html" target="_blank" rel="noopener">内閣府（祝日）</a>／<a href="https://www.jra.go.jp/datafile/seiseki/replay/2026/g1.html" target="_blank" rel="noopener">JRA（中央GⅠ）</a>／<a href="https://www.keiba.go.jp/dirtgraderace/2026/rating/prerating/index.html" target="_blank" rel="noopener">地方競馬（GⅠ・JpnⅠ）</a></p>
-        <div class="settings-footer">ながめるカレンダー　v2.1</div>
+        <div class="settings-footer">ながめるカレンダー　v3.0</div>
       </div>
     </section>
   </div>

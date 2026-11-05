@@ -460,6 +460,155 @@
     refreshMonth(target.date.slice(0,7));closeDay();notify('予定を削除しました');
   });
 
+
+  // 日記の本文はtextContentで描画し、HTMLとして実行されない。
+  // 予定は別のキーに保存されるので、この操作で既存の予定を変更しない。
+  function chooseRecordColor(id){
+    recordColor=id;
+    setColorPalette(refs.recordPalette,recordColor,chooseRecordColor);
+  }
+  function closeRecordDay(){
+    hideOverlay(refs.recordOverlay);
+    editingRecordId=null;
+  }
+  function resetRecordForm(){
+    editingRecordId=null;
+    refs.recordForm.reset();
+    refs.recordTitle.value='';
+    refs.recordBody.value='';
+    refs.recordFormHeading.textContent='新しい記録を入力';
+    refs.saveRecordBtn.textContent='記録を保存';
+    refs.deleteRecordBtn.classList.add('hidden');
+    refs.cancelRecordEditBtn.classList.add('hidden');
+    chooseRecordColor(recordColor);
+  }
+  function renderRecordDay(){
+    refs.recordHeading.textContent=japaneseDate(selectedDate);
+    const list=recordsAt(selectedDate);
+    refs.existingRecords.replaceChildren();
+    refs.existingRecordsWrap.classList.toggle('hidden',list.length===0);
+    for(const item of list){
+      const btn=make('button','record-item');
+      btn.type='button';
+      const dot=make('span','existing-dot');
+      dot.style.setProperty('--event-color',colorHex(item.color));
+      const content=make('span','record-item-content');
+      content.append(make('span','record-item-title',item.title));
+      if(item.body)content.append(make('span','record-item-preview',item.body));
+      btn.append(dot,content,make('span','edit-cue','編集 ›'));
+      btn.addEventListener('click',()=>editRecord(item.id));
+      refs.existingRecords.append(btn);
+    }
+  }
+  function openRecordDay(key,id=null){
+    selectedDate=key;
+    resetRecordForm();
+    renderRecordDay();
+    showOverlay(refs.recordOverlay);
+    if(id)editRecord(id);
+    const body=refs.recordOverlay.querySelector('.day-sheet-body');
+    if(body)body.scrollTop=0;
+  }
+  function editRecord(id){
+    const item=records.find(r=>r.id===id);
+    if(!item)return;
+    editingRecordId=id;
+    selectedDate=item.date;
+    refs.recordTitle.value=item.title;
+    refs.recordBody.value=item.body;
+    chooseRecordColor(item.color);
+    refs.recordFormHeading.textContent='記録を編集';
+    refs.saveRecordBtn.textContent='変更を保存';
+    refs.deleteRecordBtn.classList.remove('hidden');
+    refs.cancelRecordEditBtn.classList.remove('hidden');
+  }
+  function refreshRecordDisplay(key){
+    refreshMonth(key.slice(0,7));
+    if(screenMode==='records'&&recordView==='titles')renderRecordTitles();
+  }
+  function renderRecordTitles(){
+    const container=refs.recordTitles;
+    container.replaceChildren();
+    container.append(make('h2','record-list-heading','タイトル別の記録'));
+    if(!records.length){
+      container.append(make('div','record-empty','記録はまだありません。今日に記録から追加できます。'));
+      return;
+    }
+    const groups=new Map();
+    for(const record of records){
+      if(!groups.has(record.title))groups.set(record.title,[]);
+      groups.get(record.title).push(record);
+    }
+    const sorted=[...groups].sort((a,b)=>{
+      const aDate=a[1].reduce((m,r)=>r.date>m?r.date:m,'');
+      const bDate=b[1].reduce((m,r)=>r.date>m?r.date:m,'');
+      return bDate.localeCompare(aDate)||a[0].localeCompare(b[0],'ja');
+    });
+    container.append(make('div','record-list-note',`${groups.size}タイトル・${records.length}件の記録。タイトルを押すと内容が開きます。`));
+    for(const [title,group] of sorted){
+      const ordered=[...group].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
+      const box=make('section','record-group');
+      const header=make('button','record-group-toggle');
+      header.type='button';
+      const dot=make('span','record-group-dot');
+      dot.style.setProperty('--event-color',colorHex(ordered[0].color));
+      header.append(dot,make('span','record-group-title',title),
+        make('span','record-group-count',`${group.length}件 ${openTitleGroups.has(title)?'▲':'▼'}`));
+      header.setAttribute('aria-expanded',String(openTitleGroups.has(title)));
+      header.addEventListener('click',()=>{
+        if(openTitleGroups.has(title))openTitleGroups.delete(title);
+        else openTitleGroups.add(title);
+        renderRecordTitles();
+      });
+      box.append(header);
+      if(openTitleGroups.has(title)){
+        const entries=make('div','record-group-entries');
+        for(const item of ordered){
+          const button=make('button','record-group-entry');
+          button.type='button';
+          const inner=make('span','record-group-entry-meta');
+          inner.append(make('span','record-group-entry-date',japaneseDate(item.date)));
+          if(item.body)inner.append(make('span','record-group-entry-text',item.body.slice(0,160)));
+          button.append(inner,make('span','edit-cue','詳細・編集 ›'));
+          button.addEventListener('click',()=>openRecordDay(item.date,item.id));
+          entries.append(button);
+        }
+        box.append(entries);
+      }
+      container.append(box);
+    }
+  }
+  refs.recordForm.addEventListener('submit',event=>{
+    event.preventDefault();
+    const title=safeTrim(refs.recordTitle.value).slice(0,80);
+    if(!title){notify('記録のタイトルを入力してください');return;}
+    const body=String(refs.recordBody.value||'').slice(0,10000);
+    const oldRecords=records.map(r=>({...r}));
+    const now=new Date().toISOString(),editing=!!editingRecordId;
+    if(editing){
+      const item=records.find(r=>r.id===editingRecordId);
+      if(!item)return;
+      item.title=title;item.body=body;item.color=recordColor;item.updatedAt=now;
+    }else{
+      records.push({id:makeId(),date:selectedDate,title,body,color:recordColor,createdAt:now,updatedAt:now});
+    }
+    if(!saveRecords()){records=oldRecords;return;}
+    refreshRecordDisplay(selectedDate);
+    closeRecordDay();
+    notify(editing?'記録を更新しました':'記録を保存しました');
+  });
+  refs.deleteRecordBtn.addEventListener('click',()=>{
+    const item=records.find(r=>r.id===editingRecordId);
+    if(!item)return;
+    if(!confirm(`「${item.title}」の記録を削除しますか？`))return;
+    const before=records;
+    records=records.filter(r=>r.id!==item.id);
+    if(!saveRecords()){records=before;return;}
+    refreshRecordDisplay(item.date);
+    closeRecordDay();
+    notify('記録を削除しました');
+  });
+  refs.cancelRecordEditBtn.addEventListener('click',resetRecordForm);
   function resetTemplateForm() {
     editingTemplateId=null;refs.templateForm.reset();refs.templateTitle.value='';
     refs.saveTemplateBtn.textContent='ボタンを追加';refs.cancelTemplateBtn.classList.add('hidden');chooseTemplateColor(templateColor);
@@ -581,7 +730,7 @@
 
   // Export and import are deliberately manual: no account, network sync or external access.
   el('exportBtn').addEventListener('click',()=>{
-    const payload={app:'nagame-calendar',version:1,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates};
+    const payload={app:'nagame-calendar',version:2,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates,records};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');
     a.href=url;a.download=`ながめるカレンダー-バックアップ-${dateKey(TODAY())}.json`;
@@ -593,15 +742,43 @@
     const file=e.target.files?.[0];if(!file)return;
     try{
       const v=JSON.parse(await file.text());
-      if(v.app!=='nagame-calendar'||v.version!==1||!Array.isArray(v.events)||!Array.isArray(v.templates))throw Error('形式が異なります');
-      if(v.events.length>50000||v.templates.length>200)throw Error('データ件数が多すぎます');
+      if(v.app!=='nagame-calendar'||![1,2].includes(v.version)||!Array.isArray(v.events)||!Array.isArray(v.templates)||(v.version===2&&!Array.isArray(v.records)))throw Error('形式が異なります');
+      if(v.events.length>50000||v.templates.length>200||(v.version===2&&v.records.length>50000))throw Error('データ件数が多すぎます');
       if(!v.events.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&(!x.time||/^([01]\d|2[0-3]):[0-5]\d$/.test(x.time))))throw Error('予定データに不正な値があります');
       if(!v.templates.every(x=>x&&typeof x.id==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=40))throw Error('登録ボタンに不正な値があります');
-      if(!confirm(`バックアップから予定${v.events.length}件を読み込みますか？\n現在の予定は置き換えられます。`))return;
-      const old=state;
-      state={events:v.events.map(x=>({id:x.id,date:x.date,title:x.title.trim(),color:normalizeColor(x.color),time:x.time||''})),templates:v.templates.map(x=>({id:x.id,title:x.title.trim(),color:normalizeColor(x.color)}))};
-      if(!store()){state=old;return;}
-      buildCalendar();renderTemplates();hideOverlay(refs.settingsOverlay);scrollToMonth(monthKey(TODAY()),'instant');notify(`${state.events.length}件の予定を読み込みました`);
+      if(v.version===2&&!v.records.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
+        typeof x.title==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&
+        typeof x.body==='string'&&x.body.length<=10000))throw Error('記録データに不正な値があります');
+      const hasRecords=v.version===2;
+      const message=hasRecords
+        ?`予定${v.events.length}件・記録${v.records.length}件を復元しますか？\n現在の予定と記録は置き換えられます。`
+        :`予定${v.events.length}件を復元しますか？\n従来形式なので、現在の記録は保持します。`;
+      if(!confirm(message))return;
+      const old=state,oldRecords=records,oldRecordRaw=localStorage.getItem(RECORDS_KEY);
+      const imported={events:v.events.map(x=>({id:x.id,date:x.date,title:x.title.trim(),color:normalizeColor(x.color),time:x.time||''})),
+        templates:v.templates.map(x=>({id:x.id,title:x.title.trim(),color:normalizeColor(x.color)}))};
+      // 古いversion 1バックアップは予定・登録ボタンのみ復元し、記録は保持。
+      if(hasRecords){
+        records=v.records.map(x=>({id:x.id,date:x.date,title:x.title.trim(),body:x.body,
+          color:normalizeColor(x.color),createdAt:typeof x.createdAt==='string'?x.createdAt:'',
+          updatedAt:typeof x.updatedAt==='string'?x.updatedAt:''}));
+        if(!saveRecords()){records=oldRecords;return;}
+      }
+      state=imported;
+      if(!store()){
+        state=old;
+        if(hasRecords){
+          records=oldRecords;
+          try{
+            if(oldRecordRaw===null)localStorage.removeItem(RECORDS_KEY);
+            else localStorage.setItem(RECORDS_KEY,oldRecordRaw);
+          }catch(err){console.error('復元失敗時の巻き戻しに失敗',err);}
+        }
+        return;
+      }
+      buildCalendar();renderTemplates();renderRecordTitles();hideOverlay(refs.settingsOverlay);
+      applyView(monthKey(TODAY()));
+      notify(`${state.events.length}件の予定${hasRecords?'・'+records.length+'件の記録':''}を読み込みました`);
     } catch(error){notify('読み込めません：'+error.message);}finally{e.target.value='';}
   });
 
@@ -615,20 +792,23 @@
   el('jumpBtn').addEventListener('click',showJump);
   refs.jumpForm.addEventListener('submit',e=>{
     e.preventDefault();const mk=`${refs.jumpYear.value}-${String(refs.jumpMonth.value).padStart(2,'0')}`;
-    hideOverlay(refs.jumpOverlay);scrollToMonth(mk,'instant');
+    hideOverlay(refs.jumpOverlay);
+    if(screenMode==='records'&&recordView==='titles'){recordView='calendar';applyView(mk);}
+    else scrollToMonth(mk,'instant');
   });
   document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>{
     const type=btn.dataset.close;
-    if(type==='day')closeDay();else if(type==='settings')hideOverlay(refs.settingsOverlay);else if(type==='jump')hideOverlay(refs.jumpOverlay);
+    if(type==='day')closeDay();else if(type==='record')closeRecordDay();else if(type==='settings')hideOverlay(refs.settingsOverlay);else if(type==='jump')hideOverlay(refs.jumpOverlay);
   }));
   document.addEventListener('keydown',e=>{
     if(e.key!=='Escape')return;
-    if(!refs.dayOverlay.classList.contains('hidden'))closeDay();
+    if(!refs.recordOverlay.classList.contains('hidden'))closeRecordDay();
+    else if(!refs.dayOverlay.classList.contains('hidden'))closeDay();
     else if(!refs.settingsOverlay.classList.contains('hidden'))hideOverlay(refs.settingsOverlay);
     else if(!refs.jumpOverlay.classList.contains('hidden'))hideOverlay(refs.jumpOverlay);
   });
 
-  buildCalendar();chooseEventColor('blue');chooseTemplateColor('blue');
+  buildCalendar();chooseEventColor('blue');chooseTemplateColor('blue');chooseRecordColor('blue');
   renderOfficialStatus();
   if(location.protocol!=='file:')refreshOfficialData();
   requestAnimationFrame(()=>scrollToMonth(monthKey(TODAY()),'instant'));
