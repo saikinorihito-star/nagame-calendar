@@ -1368,3 +1368,27 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   .market-free-links-row {gap:3px}
   .market-free-links-row a {font-size:10px}
 }
+
+/* 終値通知の2行CSVを1タップで端末内に保存する機能 */
+.market-quick-links .market-index-link {
+  padding:0 9px;
+  flex:none;
+  white-space:nowrap;
+  min-height:34px;
+}
+.market-clipboard-help {
+  border-radius:12px;
+  margin:12px 0;
+  padding:8px 10px;
+  background:#f6f8fd;
+}
+.market-clipboard-help .record-body-input {
+  min-height:90px;
+  max-height:190px;
+  font-size:13px;
+  margin:6px 0;
+}
+@media(max-width:360px){
+  .market-quick-links {gap:5px}
+  .market-quick-links .market-index-link {font-size:10px;padding:0 7px}
+}

@@ -247,6 +247,56 @@
     if(new Set(dates).size!==dates.length)throw Error('CSVの同じ日付が重複しています');
     return result;
   }
+  // iPhoneではユーザーがコピーしたCSVを一度の操作で端末内に取り込める。
+  // Clipboard APIはボタン操作時だけ読み込み、外部送信せず保存する。
+  function importClipboardCsv(raw){
+    if(loadError)throw Error(loadError);
+    if(typeof raw!=='string'||raw.length>2000000)throw Error('コピーしたデータの形式または長さを確認してください');
+    const text=raw.trim().replace(/^\u0060{3}(?:csv|text)?\s*\n/i,'').replace(/\n\u0060{3}\s*$/,'');
+    const rows=parseCsv(text);
+    const incoming=rows.filter(row=>{
+      const old=records.get(row.date);
+      return !old||METRICS.some(m=>old[m.id]!==row[m.id]||old[m.id+'Change']!==row[m.id+'Change']);
+    });
+    if(!incoming.length){window.alert('すべて登録済みです。更新は不要です。');return 0;}
+    const overwritten=incoming.filter(row=>records.has(row.date)).length;
+    // 入力済みの終値を変える場合のみ、上書き前に確認する。
+    if(overwritten&&!window.confirm(overwritten+'営業日分の保存済み終値を上書きします。よろしいですか？'))return 0;
+    const next=new Map(records);
+    incoming.forEach(row=>next.set(row.date,row));
+    persist(next);
+    if(chosenDate)showForDate(chosenDate);
+    history();
+    window.alert(incoming.length+'営業日分の終値を保存しました。');
+    return incoming.length;
+  }
+  function showPasteFallback(message){
+    openHistory();
+    el('marketPasteFallback').classList.remove('hidden');
+    if(message)window.alert(message);
+  }
+  el('marketPasteBtn').addEventListener('click',async()=>{
+    let text;
+    try{
+      if(!navigator.clipboard?.readText)throw Error('クリップボードにアクセスできません');
+      text=await navigator.clipboard.readText();
+    }catch(err){
+      // Safariのクリップボード権限が無い場合にも手動貼り付けで利用できる。
+      showPasteFallback('クリップボードの読み取りが許可されませんでした。入力欄にCSVを貼り付けてください。');
+      return;
+    }
+    try{importClipboardCsv(text);}
+    catch(err){window.alert('終値データを取り込めません：'+err.message);}
+  });
+  el('marketPasteApplyBtn').addEventListener('click',()=>{
+    try{
+      const imported=importClipboardCsv(el('marketPasteText').value);
+      if(imported){
+        el('marketPasteText').value='';
+        el('marketPasteFallback').classList.add('hidden');
+      }
+    }catch(err){window.alert('取り込めません：'+err.message);}
+  });
   el('marketImportBtn').addEventListener('click',()=>el('marketImportFile').click());
   el('marketImportFile').addEventListener('change',async event=>{
     const file=event.target.files?.[0];
