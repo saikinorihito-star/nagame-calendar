@@ -510,10 +510,15 @@
     resetRecordForm();
     renderRecordDay();
     showOverlay(refs.recordOverlay);
+    window.MarketArchive?.showForDate(key);
     if(id)editRecord(id);
     const body=refs.recordOverlay.querySelector('.day-sheet-body');
     if(body)body.scrollTop=0;
   }
+  window.openCalendarRecordDate=(date)=>{
+    if(screenMode!=='records')switchMode('records');
+    if(isRealDate(date))openRecordDay(date);
+  };
   function editRecord(id){
     const item=records.find(r=>r.id===id);
     if(!item)return;
@@ -735,7 +740,11 @@
 
   // Export and import are deliberately manual: no account, network sync or external access.
   el('exportBtn').addEventListener('click',()=>{
-    const payload={app:'nagame-calendar',version:2,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates,records};
+    if(!window.MarketArchive){
+      notify('終値履歴を読み込めないため、バックアップを中止しました');return;
+    }
+    const payload={app:'nagame-calendar',version:3,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates,records,
+      marketEntries:window.MarketArchive?.getAll()||[]};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');
     a.href=url;a.download=`ながめるカレンダー-バックアップ-${dateKey(TODAY())}.json`;
@@ -747,44 +756,72 @@
     const file=e.target.files?.[0];if(!file)return;
     try{
       const v=JSON.parse(await file.text());
-      if(v.app!=='nagame-calendar'||![1,2].includes(v.version)||!Array.isArray(v.events)||!Array.isArray(v.templates)||(v.version===2&&!Array.isArray(v.records)))throw Error('形式が異なります');
-      if(v.events.length>50000||v.templates.length>200||(v.version===2&&v.records.length>50000))throw Error('データ件数が多すぎます');
-      if(!v.events.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&(!x.time||/^([01]\d|2[0-3]):[0-5]\d$/.test(x.time))))throw Error('予定データに不正な値があります');
-      if(!v.templates.every(x=>x&&typeof x.id==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=40))throw Error('登録ボタンに不正な値があります');
-      if(v.version===2&&!v.records.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
+      const hasRecords=v.version>=2,hasMarket=v.version>=3;
+      if(v.app!=='nagame-calendar'||![1,2,3].includes(v.version)||
+        !Array.isArray(v.events)||!Array.isArray(v.templates)||
+        (hasRecords&&!Array.isArray(v.records))||(hasMarket&&!Array.isArray(v.marketEntries)))throw Error('形式が異なります');
+      if(v.events.length>50000||v.templates.length>200||
+        (hasRecords&&v.records.length>50000)||
+        (hasMarket&&v.marketEntries.length>10000))throw Error('データ件数が多すぎます');
+      if(!v.events.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&
+        (!x.time||/^([01]\d|2[0-3]):[0-5]\d$/.test(x.time))))throw Error('予定データに不正な値があります');
+      if(!v.templates.every(x=>x&&typeof x.id==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=40))
+        throw Error('登録ボタンに不正な値があります');
+      if(hasRecords&&!v.records.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
         typeof x.title==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&
         typeof x.body==='string'&&x.body.length<=10000))throw Error('記録データに不正な値があります');
-      const hasRecords=v.version===2;
-      const message=hasRecords
-        ?`予定${v.events.length}件・記録${v.records.length}件を復元しますか？\n現在の予定と記録は置き換えられます。`
-        :`予定${v.events.length}件を復元しますか？\n従来形式なので、現在の記録は保持します。`;
-      if(!confirm(message))return;
-      const old=state,oldRecords=records,oldRecordRaw=localStorage.getItem(RECORDS_KEY);
+      if(hasMarket){
+        if(!window.MarketArchive)throw Error('終値履歴機能が読み込まれていません');
+        window.MarketArchive.validateAll(v.marketEntries);
+      }
+      const restoredSummary='予定'+v.events.length+'件'+(hasRecords?'・記録'+v.records.length+'件':'')+
+        (hasMarket?'・終値履歴'+v.marketEntries.length+'日分':'');
+      const preserved=hasMarket?'予定・記録・終値履歴を置き換えます。':
+        hasRecords?'予定・記録を置き換え、終値履歴は保持します。':
+        '予定のみ置き換え、記録と終値履歴は保持します。';
+      if(!confirm(restoredSummary+'を復元しますか？\n'+preserved))return;
+      const old=state,oldRecords=records;
+      const oldMainRaw=localStorage.getItem(STORAGE_KEY);
+      const oldRecordRaw=localStorage.getItem(RECORDS_KEY);
+      const oldMarket=hasMarket?window.MarketArchive.getAll():null;
       const imported={events:v.events.map(x=>({id:x.id,date:x.date,title:x.title.trim(),color:normalizeColor(x.color),time:x.time||''})),
         templates:v.templates.map(x=>({id:x.id,title:x.title.trim(),color:normalizeColor(x.color)}))};
-      // 古いversion 1バックアップは予定・登録ボタンのみ復元し、記録は保持。
+      const revertKey=(key,original)=>{
+        try{
+          if(original===null)localStorage.removeItem(key);
+          else localStorage.setItem(key,original);
+        }catch(err){console.error('バックアップ復元の巻き戻しに失敗',key,err);}
+      };
+      // 3つの保存先を処理し、途中失敗時は以前の値へ巻き戻す。
+      if(hasMarket){
+        try{window.MarketArchive.replaceAll(v.marketEntries);}
+        catch(err){notify('終値履歴を復元できません：'+err.message);return;}
+      }
       if(hasRecords){
         records=v.records.map(x=>({id:x.id,date:x.date,title:x.title.trim(),body:x.body,
           color:normalizeColor(x.color),createdAt:typeof x.createdAt==='string'?x.createdAt:'',
           updatedAt:typeof x.updatedAt==='string'?x.updatedAt:''}));
-        if(!saveRecords()){records=oldRecords;return;}
+        if(!saveRecords()){
+          records=oldRecords;
+          if(hasMarket)try{window.MarketArchive.replaceAll(oldMarket);}
+          catch(err){console.error('終値履歴の巻き戻しに失敗',err);}
+          return;
+        }
       }
       state=imported;
       if(!store()){
-        state=old;
-        if(hasRecords){
-          records=oldRecords;
-          try{
-            if(oldRecordRaw===null)localStorage.removeItem(RECORDS_KEY);
-            else localStorage.setItem(RECORDS_KEY,oldRecordRaw);
-          }catch(err){console.error('復元失敗時の巻き戻しに失敗',err);}
-        }
+        state=old;records=oldRecords;
+        revertKey(STORAGE_KEY,oldMainRaw);
+        if(hasRecords)revertKey(RECORDS_KEY,oldRecordRaw);
+        if(hasMarket)try{window.MarketArchive.replaceAll(oldMarket);}
+        catch(err){console.error('終値履歴の巻き戻しに失敗',err);}
         return;
       }
       buildCalendar();renderTemplates();renderRecordTitles();hideOverlay(refs.settingsOverlay);
       applyView(monthKey(TODAY()));
-      notify(`${state.events.length}件の予定${hasRecords?'・'+records.length+'件の記録':''}を読み込みました`);
-    } catch(error){notify('読み込めません：'+error.message);}finally{e.target.value='';}
+      notify(restoredSummary+'を読み込みました');
+    }catch(error){notify('読み込めません：'+error.message);}
+    finally{e.target.value='';}
   });
 
   function showJump(){

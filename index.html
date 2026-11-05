@@ -42,11 +42,9 @@
           <button class="view-choice" id="titleViewBtn" type="button" aria-pressed="false">タイトル別</button>
         </div>
       </nav>
-      <div class="market-quick-links hidden" id="marketQuickLinks" role="group" aria-label="主要3指数の指数値・前日比を公式サイトで確認">
-        <span class="market-quick-label">指数</span>
-        <a class="market-index-link" href="https://indexes.nikkei.co.jp/nkave/index?type=realtime" target="_blank" rel="noopener noreferrer" aria-label="日経平均の指数値と前日比を日経公式サイトで確認">日経平均 <span aria-hidden="true">↗</span></a>
-        <a class="market-index-link" href="https://www.jpx.co.jp/markets/indices/realvalues/" target="_blank" rel="noopener noreferrer" aria-label="TOPIXの指数値と前日比を日本取引所グループ公式サイトで確認">TOPIX <span aria-hidden="true">↗</span></a>
-        <a class="market-index-link" href="https://www.jpx.co.jp/markets/indices/realvalues/" target="_blank" rel="noopener noreferrer" aria-label="東証グロース市場250指数の指数値と前日比を日本取引所グループ公式サイトで確認">グロース250 <span aria-hidden="true">↗</span></a>
+      <div class="market-quick-links hidden" id="marketQuickLinks" role="group" aria-label="3指数の終値履歴">
+        <span class="market-quick-label">日付を押すと、その日の3指数の終値を確認できます</span>
+        <button class="market-index-link" id="marketHistoryBtn" type="button">終値履歴</button>
       </div>
     </header>
     <main class="scroll-area" id="scrollArea" aria-label="月ごとのカレンダー">
@@ -95,6 +93,39 @@
         <button type="button" class="close-btn" data-close="record" aria-label="閉じる">×</button>
       </div>
       <div class="day-sheet-body">
+        <section class="market-day-section" aria-label="この日の株価指数終値">
+          <div class="market-section-head">
+            <strong>3指数の終値</strong>
+            <button id="marketEditBtn" class="market-edit-btn" type="button">入力・編集</button>
+          </div>
+          <div id="marketDateStatus" class="market-date-status"></div>
+          <div id="marketDailyValues" class="market-daily-values"></div>
+          <form id="marketForm" class="market-entry-form hidden" autocomplete="off">
+            <p class="market-hint">終値と公式の前日比（ポイント）を入力できます。未入力は「—」で表示します。</p>
+            <div class="market-field-labels"><span>指数</span><span>終値</span><span>前日比（任意）</span></div>
+            <div class="market-input-row">
+              <label for="marketNikkeiClose">日経平均</label>
+              <input type="number" id="marketNikkeiClose" inputmode="decimal" step="0.01" min="0" placeholder="終値">
+              <input type="number" id="marketNikkeiDelta" inputmode="decimal" step="0.01" placeholder="前日比" aria-label="日経平均の前日比">
+            </div>
+            <div class="market-input-row">
+              <label for="marketTopixClose">TOPIX</label>
+              <input type="number" id="marketTopixClose" inputmode="decimal" step="0.01" min="0" placeholder="終値">
+              <input type="number" id="marketTopixDelta" inputmode="decimal" step="0.01" placeholder="前日比" aria-label="TOPIXの前日比">
+            </div>
+            <div class="market-input-row">
+              <label for="marketGrowthClose">グロース250</label>
+              <input type="number" id="marketGrowthClose" inputmode="decimal" step="0.01" min="0" placeholder="終値">
+              <input type="number" id="marketGrowthDelta" inputmode="decimal" step="0.01" placeholder="前日比" aria-label="グロース250の前日比">
+            </div>
+            <div class="market-form-actions">
+              <button class="save-btn" type="submit">この日の終値を保存</button>
+              <button class="ghost-btn" id="marketCancelBtn" type="button">戻る</button>
+              <button class="delete-btn hidden" id="marketDeleteBtn" type="button">この日の指数データを削除</button>
+            </div>
+            <p class="market-hint">入力の参考：<a href="https://indexes.nikkei.co.jp/nkave/statistics" target="_blank" rel="noopener noreferrer">日経平均（日経公式）</a> ／ <a href="https://www.jpx.co.jp/markets/indices/realvalues/" target="_blank" rel="noopener noreferrer">TOPIX・グロース250（JPX）</a>。公式サイトの掲載内容・利用条件をご確認ください。</p>
+          </form>
+        </section>
         <div id="existingRecordsWrap" class="existing-wrap hidden">
           <div class="section-heading">この日の記録</div>
           <div id="existingRecords" class="existing-events"></div>
@@ -116,6 +147,26 @@
     </section>
   </div>
 
+  <div class="overlay hidden" id="marketHistoryOverlay" role="presentation">
+    <div class="shade" data-market-close="true"></div>
+    <section class="sheet market-history-sheet" role="dialog" aria-modal="true" aria-labelledby="marketHistoryHeading">
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <div><div class="sheet-eyebrow">日付別アーカイブ</div><h2 id="marketHistoryHeading">3指数の終値履歴</h2></div>
+        <button id="marketHistoryCloseBtn" type="button" class="close-btn" aria-label="履歴を閉じる">×</button>
+      </div>
+      <div class="market-history-body">
+        <p class="market-hint">登録した日の終値と前日比を、新しい日付から表示します。日付をタップすると編集できます。</p>
+        <div id="marketHistoryList"></div>
+        <div class="settings-divider"></div>
+        <div class="section-heading">CSVで過去データをまとめて登録</div>
+        <p class="market-hint">1行目を <code>date,nikkei,nikkeiChange,topix,topixChange,growth250,growth250Change</code> としたUTF-8のCSVを読み込めます。前日比の列は空欄でも構いません。既存の日付は上書きする前に確認します。</p>
+        <button class="secondary-btn market-import-btn" id="marketImportBtn" type="button">CSVファイルを読み込む</button>
+        <input class="hidden" id="marketImportFile" type="file" accept=".csv,text/csv,text/plain">
+      </div>
+    </section>
+  </div>
+
   <div class="overlay hidden" id="settingsOverlay" role="presentation">
     <div class="shade" data-close="settings"></div>
     <section class="sheet settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
@@ -126,9 +177,9 @@
         <div id="templateList" class="template-list"></div>
         <form id="templateForm" class="template-form"><label class="small-label" for="templateTitle">登録ボタンを追加・編集</label><input id="templateTitle" class="text-input" maxlength="40" required placeholder="例：夜勤、ジム、休み"><div class="palette" id="templatePalette" role="group" aria-label="ボタンの色"></div><div class="form-actions"><button type="submit" class="save-btn" id="saveTemplateBtn">ボタンを追加</button><button type="button" class="ghost-btn hidden" id="cancelTemplateBtn">キャンセル</button></div></form>
         <div class="settings-divider"></div>
-        <h3>予定・記録のバックアップ</h3><p class="explain">予定と日記・記録は、この端末のブラウザ内に保存されます。機種変更やデータ削除に備え、定期的にバックアップを保存してください。</p>
+        <h3>予定・記録・終値履歴のバックアップ</h3><p class="explain">予定と日記・記録は、この端末のブラウザ内に保存されます。機種変更やデータ削除に備え、定期的にバックアップを保存してください。</p>
         <div class="backup-actions"><button type="button" class="secondary-btn" id="exportBtn">バックアップを保存</button><button type="button" class="secondary-btn" id="importBtn">バックアップを読み込む</button><input class="hidden" id="importFile" type="file" accept=".json,application/json"></div>
-        <p class="notice">新しい形式のバックアップを読み込むと、予定・登録ボタン・記録が置き換わります。従来形式のバックアップは予定・登録ボタンのみ置き換え、現在の記録は保持します。別のiPhoneへの自動同期はありません。</p>
+        <p class="notice">新形式のバックアップには、予定・記録・指数の終値履歴が含まれます。以前の形式を復元するときは、古い形式に含まれない記録・指数履歴を保持します。別のiPhoneへの自動同期はありません。</p>
         <div class="settings-divider"></div>
         <h3>カレンダーに表示する内容</h3>
         <p class="explain">自分で入力した予定とは別に、競馬のGⅠ開催日を表示できます。</p>
@@ -152,5 +203,6 @@
   <script src="./holidays.js"></script>
   <script src="./races.js"></script>
   <script src="./app.js"></script>
+  <script src="./market.js"></script>
 </body>
 </html>
