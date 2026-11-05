@@ -14,12 +14,20 @@
     const [y,m,d]=s.split('-').map(Number),v=new Date(y,m-1,d);
     return v.getFullYear()===y&&v.getMonth()===m-1&&v.getDate()===d;
   };
+  const isTradingDate=s=>{
+    if(!realDate(s))return false;
+    const [y,m,d]=s.split('-').map(Number),date=new Date(y,m-1,d);
+    if(date.getDay()===0||date.getDay()===6)return false;
+    if(m===12&&d===31||m===1&&d<=3)return false;
+    return !(window.CALENDAR_HOLIDAYS||{})[s];
+  };
   const japaneseDate=s=>{
     const [y,m,d]=s.split('-').map(Number);
     return y+'年'+m+'月'+d+'日';
   };
   function cleanRow(row){
     if(!row||!realDate(row.date))throw Error('日付が正しくありません');
+    if(!isTradingDate(row.date))throw Error('休場日には指数の終値を登録できません');
     const record={date:row.date};
     for(const m of METRICS){
       const close=row[m.id],change=row[m.id+'Change'];
@@ -85,7 +93,7 @@
       const prior=close-diff;
       const pct=prior>0?(diff/prior*100):null;
       v.classList.add(diff>0?'positive':diff<0?'negative':'neutral');
-      v.textContent=(diff>0?'+':'')+indexFormat.format(diff)+(pct===null?'': ' ('+(pct>0?'+':'')+pct.toFixed(2)+'%)');
+      v.textContent='前日比 '+(diff>0?'+':'')+indexFormat.format(diff)+(pct===null?'': ' ('+(pct>0?'+':'')+pct.toFixed(2)+'%)')+(source.startsWith('保存済み')?' ※':'');
       v.title=source;
       v.setAttribute('aria-label',source+' '+v.textContent);
     }
@@ -113,10 +121,12 @@
     el('marketForm').classList.add('hidden');
     el('marketDailyValues').replaceChildren(cards(records.get(date)));
     const existing=records.get(date);
-    el('marketDateStatus').textContent=loadError||(
-      existing?'登録済み・'+japaneseDate(date)+'（前日比が未入力の場合は、保存済み前営業日から計算できるときだけ参考表示）'
+    const isOpen=isTradingDate(date);
+    el('marketDateStatus').textContent=loadError||(!isOpen
+      ?'この日は取引所の休場日です。終値の新規登録はできません。'
+      :existing?'登録済み・'+japaneseDate(date)+'（前日比が未入力の場合は、保存済み前営業日から計算できるときだけ参考表示）'
         :'この日の指数値は未登録です。終値を入力・保存できます。');
-    el('marketEditBtn').disabled=!!loadError;
+    el('marketEditBtn').disabled=!!loadError||!isOpen;
     el('marketDeleteBtn').classList.toggle('hidden',!existing);
   }
   const blankOrNumber=(text,label,positive=false)=>{
@@ -127,7 +137,7 @@
     return Math.round(v*100)/100;
   };
   el('marketEditBtn').addEventListener('click',()=>{
-    if(!chosenDate||loadError)return;
+    if(!chosenDate||loadError||!isTradingDate(chosenDate))return;
     const row=records.get(chosenDate)||{};
     for(const metric of METRICS){
       el(metric.close).value=inputValue(row[metric.id]);

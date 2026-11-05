@@ -740,6 +740,9 @@
 
   // Export and import are deliberately manual: no account, network sync or external access.
   el('exportBtn').addEventListener('click',()=>{
+    if(!window.MarketArchive){
+      notify('終値履歴を読み込めないため、バックアップを中止しました');return;
+    }
     const payload={app:'nagame-calendar',version:3,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates,records,
       marketEntries:window.MarketArchive?.getAll()||[]};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
