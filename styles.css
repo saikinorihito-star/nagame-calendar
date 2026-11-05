@@ -1392,3 +1392,12 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   .market-quick-links {gap:5px}
   .market-quick-links .market-index-link {font-size:10px;padding:0 7px}
 }
+/* iOSのコピー貼り付けを案内する入力欄 */
+#marketPasteFallback .record-body-input {
+  min-height:105px;
+  background:#fff;
+  font-size:16px;
+}
+#marketPasteStatus {
+  margin:4px 0 10px;
+}

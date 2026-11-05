@@ -169,10 +169,11 @@
         <p class="market-hint">ここには自分で登録した終値を新しい日付順で表示します。日付をタップすると編集できます。自動更新のある無料チャートは記録の日付をタップすると開けます。</p>
         <div id="marketHistoryList"></div>
         <div class="market-clipboard-help">
-          <p class="market-hint">ChatGPTで届く2行のCSVをコピーしてから、記録画面の「コピーから登録」を押すだけで保存できます。</p>
+          <p class="market-hint">ChatGPTのCSVをコピーし、「コピーから登録」を押します。iPhoneでは下の入力欄に「ペースト」すると、自動で取り込みます。</p>
           <div id="marketPasteFallback" class="hidden">
-            <label for="marketPasteText" class="small-label">終値データを貼り付け</label>
-            <textarea id="marketPasteText" class="record-body-input" rows="3" placeholder="date,nikkei,nikkeiChange,topix,topixChange,growth250,growth250Change&#10;YYYY-MM-DD,..."></textarea>
+            <label for="marketPasteText" class="small-label">ここをタップ・長押しして「ペースト」</label>
+            <textarea id="marketPasteText" class="record-body-input" rows="3" placeholder="ここに2行のCSVをペースト&#10;date,nikkei,nikkeiChange,...&#10;YYYY-MM-DD,..."></textarea>
+            <p id="marketPasteStatus" class="market-hint" role="status" aria-live="polite">ペーストすると自動で保存します。自動で保存されない場合は下のボタンを押してください。</p>
             <button id="marketPasteApplyBtn" class="secondary-btn market-import-btn" type="button">貼り付けた終値を保存</button>
           </div>
         </div>

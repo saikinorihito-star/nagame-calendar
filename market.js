@@ -270,31 +270,52 @@
     window.alert(incoming.length+'営業日分の終値を保存しました。');
     return incoming.length;
   }
-  function showPasteFallback(message){
+  function showPasteFallback(){
     openHistory();
     el('marketPasteFallback').classList.remove('hidden');
-    if(message)window.alert(message);
+    el('marketPasteStatus').textContent='ペーストすると自動で保存します。自動で保存されない場合は下のボタンを押してください。';
+    // テキスト欄の操作による通常の「ペースト」は、iOS内蔵ブラウザでも利用しやすい。
+    // フォーカスを当てるだけでクリップボードを自動取得することはしない。
+    el('marketPasteText').focus();
   }
+  function clearPasteAfterSuccess(imported){
+    if(!imported)return;
+    el('marketPasteText').value='';
+    el('marketPasteFallback').classList.add('hidden');
+    el('marketPasteStatus').textContent='保存しました。';
+  }
+  // iPhone / iPad のブラウザでは navigator.clipboard.readText() が
+  // OSの「ペースト」確認を表示した後でも拒否されることがある。
+  // そのため権限APIを呼ばず、最初から通常の貼り付け欄を開く。
+  const iosClipboard=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||
+    (/Macintosh/i.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
   el('marketPasteBtn').addEventListener('click',async()=>{
+    if(iosClipboard()||!navigator.clipboard?.readText){showPasteFallback();return;}
     let text;
-    try{
-      if(!navigator.clipboard?.readText)throw Error('クリップボードにアクセスできません');
-      text=await navigator.clipboard.readText();
-    }catch(err){
-      // Safariのクリップボード権限が無い場合にも手動貼り付けで利用できる。
-      showPasteFallback('クリップボードの読み取りが許可されませんでした。入力欄にCSVを貼り付けてください。');
-      return;
-    }
+    try{text=await navigator.clipboard.readText();}
+    catch(err){showPasteFallback();return;}
     try{importClipboardCsv(text);}
-    catch(err){window.alert('終値データを取り込めません：'+err.message);}
+    catch(err){showPasteFallback();el('marketPasteStatus').textContent='コピーした内容を確認して、2行のCSVをペーストしてください。';}
+  });
+  // iOSの「ペースト」で入力された2行CSVは、保存ボタンを押す前に自動で取り込む。
+  // 不完全な入力や手入力途中のテキストでは保存しない。
+  el('marketPasteText').addEventListener('input',()=>{
+    const raw=el('marketPasteText').value.trim();
+    const text=raw.replace(/^\u0060{3}(?:csv|text)?\s*\n/i,'').replace(/\n\u0060{3}\s*$/,'');
+    const looksComplete=/^date,nikkei,nikkeiChange,topix,topixChange,growth250,growth250Change\s*\r?\n\d{4}-\d{2}-\d{2},/.test(text);
+    if(!looksComplete)return;
+    try{
+      // parseCsv が列数・数字・営業日を確認してから、変更時のみ persist する。
+      const imported=importClipboardCsv(raw);
+      clearPasteAfterSuccess(imported);
+    }catch(err){
+      el('marketPasteStatus').textContent='CSVの内容を確認してください：'+err.message;
+    }
   });
   el('marketPasteApplyBtn').addEventListener('click',()=>{
     try{
       const imported=importClipboardCsv(el('marketPasteText').value);
-      if(imported){
-        el('marketPasteText').value='';
-        el('marketPasteFallback').classList.add('hidden');
-      }
+      clearPasteAfterSuccess(imported);
     }catch(err){window.alert('取り込めません：'+err.message);}
   });
   el('marketImportBtn').addEventListener('click',()=>el('marketImportFile').click());
