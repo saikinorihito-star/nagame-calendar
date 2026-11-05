@@ -43,7 +43,8 @@
         </div>
       </nav>
       <div class="market-quick-links hidden" id="marketQuickLinks" role="group" aria-label="3指数の終値履歴">
-        <span class="market-quick-label">日付を押すと、その日の3指数の終値を確認できます</span>
+        <span class="market-quick-label">3指数の終値</span>
+        <button class="market-index-link" id="marketPasteBtn" type="button">コピーから登録</button>
         <button class="market-index-link" id="marketHistoryBtn" type="button">終値履歴</button>
       </div>
     </header>
@@ -167,6 +168,14 @@
       <div class="market-history-body">
         <p class="market-hint">ここには自分で登録した終値を新しい日付順で表示します。日付をタップすると編集できます。自動更新のある無料チャートは記録の日付をタップすると開けます。</p>
         <div id="marketHistoryList"></div>
+        <div class="market-clipboard-help">
+          <p class="market-hint">ChatGPTで届く2行のCSVをコピーしてから、記録画面の「コピーから登録」を押すだけで保存できます。</p>
+          <div id="marketPasteFallback" class="hidden">
+            <label for="marketPasteText" class="small-label">終値データを貼り付け</label>
+            <textarea id="marketPasteText" class="record-body-input" rows="3" placeholder="date,nikkei,nikkeiChange,topix,topixChange,growth250,growth250Change&#10;YYYY-MM-DD,..."></textarea>
+            <button id="marketPasteApplyBtn" class="secondary-btn market-import-btn" type="button">貼り付けた終値を保存</button>
+          </div>
+        </div>
         <div class="settings-divider"></div>
         <div class="section-heading">CSVで過去データをまとめて登録</div>
         <p class="market-hint">1行目を <code>date,nikkei,nikkeiChange,topix,topixChange,growth250,growth250Change</code> としたUTF-8のCSVを読み込めます。前日比の列は空欄でも構いません。既存の日付は上書きする前に確認します。</p>
