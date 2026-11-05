@@ -1401,3 +1401,31 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 #marketPasteStatus {
   margin:4px 0 10px;
 }
+
+/* 記録詳細の保存済み指数：入力フォームや履歴の配置は変更しない。 */
+#marketDailyValues,
+#marketDailyValues > .market-daily-values {
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+}
+#marketDailyValues .market-value-card {
+  padding:12px 14px;
+}
+#marketDailyValues .market-value-name {
+  font-size:13px;
+}
+#marketDailyValues .market-value-number {
+  font-size:clamp(20px,6vw,24px);
+  line-height:1.4;
+  white-space:nowrap;
+  overflow-wrap:normal;
+}
+#marketDailyValues .market-value-change {
+  font-size:13px;
+  line-height:1.6;
+}
+#marketDailyValues .market-change-amount,
+#marketDailyValues .market-change-rate {
+  display:block;
+  white-space:nowrap;
+}

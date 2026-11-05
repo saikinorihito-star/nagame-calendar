@@ -93,7 +93,14 @@
       const prior=close-diff;
       const pct=prior>0?(diff/prior*100):null;
       v.classList.add(diff>0?'positive':diff<0?'negative':'neutral');
-      v.textContent='前日比 '+(diff>0?'+':'')+indexFormat.format(diff)+(pct===null?'': ' ('+(pct>0?'+':'')+pct.toFixed(2)+'%)')+(source.startsWith('保存済み')?' ※':'');
+      const amount=document.createElement('span');amount.className='market-change-amount';
+      amount.textContent='前日比 '+(diff>0?'+':'')+indexFormat.format(diff);
+      v.append(amount);
+      if(pct!==null){
+        const rate=document.createElement('span');rate.className='market-change-rate';
+        rate.textContent=' ('+(pct>0?'+':'')+pct.toFixed(2)+'%)';v.append(rate);
+      }
+      if(source.startsWith('保存済み'))v.append(' ※');
       v.title=source;
       v.setAttribute('aria-label',source+' '+v.textContent);
     }
