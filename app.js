@@ -274,6 +274,7 @@
   function applyView(mk=monthKey(TODAY())){
     const list=screenMode==='records'&&recordView==='titles';
     refs.recordViewSwitch.classList.toggle('hidden',screenMode!=='records');
+    el('marketQuickLinks').classList.toggle('hidden',screenMode!=='records');
     refs.months.classList.toggle('hidden',list);
     el('scrollEnding').classList.toggle('hidden',list);
     el('startTip').classList.toggle('hidden',list);
