@@ -329,6 +329,8 @@
     refs.visibleMonth.textContent=`${targetDate.getFullYear()}年${targetDate.getMonth()+1}月`;
   }
   function handleScroll() {
+    // タイトル別一覧のスクロールを月カレンダーの無限スクロール処理に渡さない。
+    if(screenMode==='records'&&recordView==='titles')return;
     if(scrollFrame)return;
     scrollFrame=requestAnimationFrame(()=>{
       scrollFrame=0;
