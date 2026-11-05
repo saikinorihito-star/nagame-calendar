@@ -95,11 +95,20 @@
       <div class="day-sheet-body">
         <section class="market-day-section" aria-label="この日の株価指数終値">
           <div class="market-section-head">
-            <strong>3指数の終値</strong>
+            <strong>保存した3指数の終値</strong>
             <button id="marketEditBtn" class="market-edit-btn" type="button">入力・編集</button>
           </div>
           <div id="marketDateStatus" class="market-date-status"></div>
           <div id="marketDailyValues" class="market-daily-values"></div>
+          <div class="market-free-links" aria-label="無料の日足チャート">
+            <p class="market-hint">無料の日足チャートで過去の値動きを確認（TradingView・外部サイト）</p>
+            <div class="market-free-links-row">
+              <a href="https://jp.tradingview.com/symbols/TVC-NI225/" target="_blank" rel="noopener noreferrer" aria-label="日経平均の無料日足チャートを開く">日経平均 <span aria-hidden="true">↗</span></a>
+              <a href="https://jp.tradingview.com/symbols/TSE-TOPIX/" target="_blank" rel="noopener noreferrer" aria-label="TOPIXの無料日足チャートを開く">TOPIX <span aria-hidden="true">↗</span></a>
+              <a href="https://jp.tradingview.com/symbols/TSE-MOS/" target="_blank" rel="noopener noreferrer" aria-label="東証グロース250指数の無料日足チャートを開く">グロース250 <span aria-hidden="true">↗</span></a>
+            </div>
+            <p class="market-data-note">チャートは表示元が更新します。終値はアプリへ自動保存されないため、上の保存欄には登録済みの値のみ表示します。</p>
+          </div>
           <form id="marketForm" class="market-entry-form hidden" autocomplete="off">
             <p class="market-hint">終値と公式の前日比（ポイント）を入力できます。未入力は「—」で表示します。</p>
             <div class="market-field-labels"><span>指数</span><span>終値</span><span>前日比（任意）</span></div>
@@ -156,7 +165,7 @@
         <button id="marketHistoryCloseBtn" type="button" class="close-btn" aria-label="履歴を閉じる">×</button>
       </div>
       <div class="market-history-body">
-        <p class="market-hint">登録した日の終値と前日比を、新しい日付から表示します。日付をタップすると編集できます。</p>
+        <p class="market-hint">ここには自分で登録した終値を新しい日付順で表示します。日付をタップすると編集できます。自動更新のある無料チャートは記録の日付をタップすると開けます。</p>
         <div id="marketHistoryList"></div>
         <div class="settings-divider"></div>
         <div class="section-heading">CSVで過去データをまとめて登録</div>
