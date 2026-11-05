@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const STORAGE_KEY = 'nagame-calendar-v1'; // Keep unchanged across app updates to preserve data.
+  const RECORDS_KEY = 'nagame-calendar-records-v1'; // 別キーへ保存し、既存の予定は移行・上書きしない。
   const COLORS = [
     {id:'blue',name:'青',hex:'#3474d5'},
     {id:'mint',name:'緑',hex:'#008e74'},
@@ -95,7 +96,12 @@
     settingsOverlay:el('settingsOverlay'),templateList:el('templateList'),templateForm:el('templateForm'),templateTitle:el('templateTitle'),templatePalette:el('templatePalette'),
     saveTemplateBtn:el('saveTemplateBtn'),cancelTemplateBtn:el('cancelTemplateBtn'),jumpOverlay:el('jumpOverlay'),jumpForm:el('jumpForm'),
     jumpYear:el('jumpYear'),jumpMonth:el('jumpMonth'),toast:el('toast'),toastText:el('toastText'),undoBtn:el('undoBtn'),
-    showCentral:el('showCentral'),showLocal:el('showLocal'),holidayStatus:el('holidayStatus'),raceStatus:el('raceStatus')
+    showCentral:el('showCentral'),showLocal:el('showLocal'),holidayStatus:el('holidayStatus'),raceStatus:el('raceStatus'),
+    recordOverlay:el('recordOverlay'),recordHeading:el('recordHeading'),recordForm:el('recordForm'),
+    recordTitle:el('recordTitle'),recordBody:el('recordBody'),recordPalette:el('recordPalette'),
+    recordFormHeading:el('recordFormHeading'),saveRecordBtn:el('saveRecordBtn'),deleteRecordBtn:el('deleteRecordBtn'),
+    cancelRecordEditBtn:el('cancelRecordEditBtn'),existingRecordsWrap:el('existingRecordsWrap'),
+    existingRecords:el('existingRecords'),recordTitles:el('recordTitles'),recordViewSwitch:el('recordViewSwitch')
   };
   const fmt = (y,m,d) => `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const dateKey = d => fmt(d.getFullYear(),d.getMonth()+1,d.getDate());
@@ -121,7 +127,24 @@
       };
     } catch (err) { console.error('データの読込失敗',err); return {events:[],templates:DEFAULT_TEMPLATES.map(x=>({...x}))}; }
   }
+  function loadRecords() {
+    try {
+      const raw=localStorage.getItem(RECORDS_KEY);
+      if(!raw)return [];
+      const data=JSON.parse(raw);
+      if(!data||data.version!==1||!Array.isArray(data.records))throw Error('記録データの形式が異なります');
+      return data.records.filter(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
+        safeTrim(x.title)&&typeof x.body==='string').map(x=>({
+          id:x.id,date:x.date,title:safeTrim(x.title).slice(0,80),body:x.body.slice(0,10000),
+          color:normalizeColor(x.color),createdAt:typeof x.createdAt==='string'?x.createdAt:'',
+          updatedAt:typeof x.updatedAt==='string'?x.updatedAt:''
+        }));
+    }catch(err){console.error('記録の読み込みに失敗',err);return [];}
+  }
   let state=loadState();
+  let records=loadRecords();
+  let screenMode='plans',recordView='calendar',editingRecordId=null,recordColor='blue';
+  const openTitleGroups=new Set();
   let selectedDate=dateKey(TODAY());
   let editingEventId=null,editingTemplateId=null,eventColor='blue',templateColor='blue';
   let rangeStart=monthDate(TODAY(),-6),rangeEnd=monthDate(TODAY(),17);
@@ -130,6 +153,10 @@
   function store() {
     try {localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
     catch(err) {console.error('保存に失敗',err);notify('保存できません。端末の空き容量を確認してください');return false;}
+  }
+  function saveRecords(){
+    try{localStorage.setItem(RECORDS_KEY,JSON.stringify({version:1,records}));return true;}
+    catch(err){console.error('記録を保存できません',err);notify('記録を保存できません。端末の空き容量を確認してください');return false;}
   }
   function notify(message,ids=[]) {
     clearTimeout(toastTimer);undoIds=ids;
@@ -145,6 +172,8 @@
     refs.toast.classList.add('hidden');undoIds=[];
   });
   const eventSort = (a,b) => (a.time||'').localeCompare(b.time||'') || a.title.localeCompare(b.title,'ja');
+  const recordSort=(a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')||a.title.localeCompare(b.title,'ja');
+  const recordsAt=date=>records.filter(r=>r.date===date).sort(recordSort);
   const eventsAt = date => state.events.filter(e=>e.date===date).sort(eventSort);
   function make(tag,className,text) {
     const node=document.createElement(tag);
@@ -158,14 +187,16 @@
     const startDay=new Date(y,mo,1).getDay();
     const nDays=new Date(y,mo+1,0).getDate();
     const rows=Math.ceil((startDay+nDays)/7);
-    const monthEvents=state.events.filter(e=>e.date.startsWith(mk+'-'));
+    const monthItems=screenMode==='plans'
+      ?state.events.filter(e=>e.date.startsWith(mk+'-'))
+      :records.filter(r=>r.date.startsWith(mk+'-'));
     const byDay=new Map();
-    for(const e of monthEvents){if(!byDay.has(e.date))byDay.set(e.date,[]);byDay.get(e.date).push(e);}
-    for(const list of byDay.values())list.sort(eventSort);
+    for(const item of monthItems){if(!byDay.has(item.date))byDay.set(item.date,[]);byDay.get(item.date).push(item);}
+    for(const list of byDay.values())list.sort(screenMode==='plans'?eventSort:recordSort);
     const section=make('section','month-card');section.id='month-'+mk;section.dataset.month=mk;
     const top=make('div','month-top');const left=make('div');
     left.append(make('span','month-name',`${mo+1}月`),make('span','month-year',`${y}年`));
-    top.append(left,make('span','month-count',`${monthEvents.length}件の予定`));section.append(top);
+    top.append(left,make('span','month-count',`${monthItems.length}件の${screenMode==='plans'?'予定':'記録'}`));section.append(top);
     const week=make('div','weekday-grid');for(const w of '日月火水木金土')week.append(make('div','weekday',w));section.append(week);
     const grid=make('div','day-grid');
     for(let idx=0;idx<rows*7;idx++){
@@ -175,25 +206,31 @@
       const classes=['day'];if(dayOfWeek===0)classes.push('is-sunday');if(dayOfWeek===6)classes.push('is-saturday');
       if(holiday)classes.push('is-holiday');if(key===dateKey(TODAY()))classes.push('today');
       const btn=make('button',classes.join(' '));btn.type='button';btn.dataset.date=key;
-      btn.setAttribute('aria-label',japaneseDate(key)+(holiday?` ${holiday}`:'')+' 予定を入力');
+      btn.setAttribute('aria-label',japaneseDate(key)+(holiday?` ${holiday}`:'')+(screenMode==='plans'?' 予定を入力':' 記録を書く'));
       btn.append(make('span','day-number',String(dayNum)));
       if(holiday)btn.append(make('span','holiday-label',holiday));
       const entries=byDay.get(key)||[];
-      const races=raceAt(key);
-      // 登録済み予定を優先して3件まで表示し、残りの枠を競馬日程に使用する。
-      // 日付マスは内容に応じて高さが広がるため、3件目も隠さず表示できる。
-      const count=Math.min(3,entries.length);
-      entries.slice(0,count).forEach(e=>{
-        const pill=make('span','event-pill',(e.time?e.time+' ':'')+e.title);
-        pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
-      });
-      races.slice(0,3-count).forEach(r=>{
-        const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
-        pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
-      });
-      const allCount=entries.length+races.length;
-      if(allCount>3)btn.append(make('span','event-extra',`＋${allCount-3}件`));
-      btn.addEventListener('click',()=>openDay(key));grid.append(btn);
+      if(screenMode==='records'){
+        entries.slice(0,3).forEach(record=>{
+          const pill=make('span','record-pill',record.title);
+          pill.style.setProperty('--event-color',colorHex(record.color));btn.append(pill);
+        });
+        if(entries.length>3)btn.append(make('span','event-extra',`＋${entries.length-3}件`));
+      }else{
+        // 従来どおり予定を優先し、3件までの空き枠にGⅠ日程を表示する。
+        const races=raceAt(key),count=Math.min(3,entries.length);
+        entries.slice(0,count).forEach(e=>{
+          const pill=make('span','event-pill',(e.time?e.time+' ':'')+e.title);
+          pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
+        });
+        races.slice(0,3-count).forEach(r=>{
+          const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
+          pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
+        });
+        const allCount=entries.length+races.length;
+        if(allCount>3)btn.append(make('span','event-extra',`＋${allCount-3}件`));
+      }
+      btn.addEventListener('click',()=>screenMode==='records'?openRecordDay(key):openDay(key));grid.append(btn);
     }
     section.append(grid);
     if(!Object.keys(HOLIDAYS).some(k=>k.startsWith(y+'-')))section.append(make('div','holiday-warning','この年の祝日データは未収録です'));
@@ -223,6 +260,59 @@
     const date=dateFromKey(mk+'-01');old.replaceWith(renderMonth(date));
   }
   function refreshMonthSet(months) {for(const mk of months)refreshMonth(mk);}
+
+  function setChoice(id,active){
+    const node=el(id);
+    node.classList.toggle('active',active);
+    node.setAttribute('aria-pressed',String(active));
+  }
+  function displayedMonth(){
+    const match=refs.visibleMonth.textContent.match(/(\d{4})年(\d+)月/);
+    return match?`${match[1]}-${String(Number(match[2])).padStart(2,'0')}`:monthKey(TODAY());
+  }
+  function applyView(mk=monthKey(TODAY())){
+    const list=screenMode==='records'&&recordView==='titles';
+    refs.recordViewSwitch.classList.toggle('hidden',screenMode!=='records');
+    refs.months.classList.toggle('hidden',list);
+    el('scrollEnding').classList.toggle('hidden',list);
+    el('startTip').classList.toggle('hidden',list);
+    refs.recordTitles.classList.toggle('hidden',!list);
+    const add=el('quickAddBtn');
+    add.setAttribute('aria-label',screenMode==='records'?'今日の記録を追加':'今日の予定を追加');
+    add.querySelector('.floating-add-label').textContent=screenMode==='records'?'今日に記録':'今日に追加';
+    setChoice('showPlansBtn',screenMode==='plans');
+    setChoice('showRecordsBtn',screenMode==='records');
+    setChoice('calendarViewBtn',!list);
+    setChoice('titleViewBtn',list);
+    if(list){
+      refs.visibleMonth.textContent='記録・タイトル別';
+      el('todayBtn').classList.add('hidden');
+      renderRecordTitles();
+      refs.scroll.scrollTop=0;
+    }else{
+      el('todayBtn').classList.remove('hidden');
+      buildCalendar();
+      scrollToMonth(mk,'instant');
+      el('startTip').textContent=screenMode==='plans'
+        ?'日付をタップすると予定を追加できます。月は上下にスクロールできます。'
+        :'日付をタップすると記録を書けます。タイトル別の一覧にも切り替えできます。';
+    }
+  }
+  function switchMode(mode){
+    if(mode===screenMode)return;
+    const mk=displayedMonth();
+    screenMode=mode;
+    if(mode==='plans')recordView='calendar';
+    applyView(mk);
+  }
+  el('showPlansBtn').addEventListener('click',()=>switchMode('plans'));
+  el('showRecordsBtn').addEventListener('click',()=>switchMode('records'));
+  el('calendarViewBtn').addEventListener('click',()=>{
+    if(screenMode==='records'){recordView='calendar';applyView(monthKey(TODAY()));}
+  });
+  el('titleViewBtn').addEventListener('click',()=>{
+    if(screenMode==='records'){recordView='titles';applyView();}
+  });
   function scrollToMonth(mk,behavior='smooth') {
     const targetDate=dateFromKey(mk+'-01');
     if(!el('month-'+mk)) {
@@ -254,7 +344,7 @@
   }
   refs.scroll.addEventListener('scroll',handleScroll,{passive:true});
   el('todayBtn').addEventListener('click',()=>scrollToMonth(monthKey(TODAY())));
-  el('quickAddBtn').addEventListener('click',()=>openDay(dateKey(TODAY())));
+  el('quickAddBtn').addEventListener('click',()=>screenMode==='records'?openRecordDay(dateKey(TODAY())):openDay(dateKey(TODAY())));
 
   function setColorPalette(container,selected,onSelect) {
     container.replaceChildren();
