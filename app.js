@@ -144,6 +144,7 @@
   let state=loadState();
   let records=loadRecords();
   let screenMode='plans',recordView='calendar',editingRecordId=null,recordColor='blue';
+  let lastRecordMonth=monthKey(TODAY());
   const openTitleGroups=new Set();
   let selectedDate=dateKey(TODAY());
   let editingEventId=null,editingTemplateId=null,eventColor='blue',templateColor='blue';
@@ -308,12 +309,13 @@
   el('showPlansBtn').addEventListener('click',()=>switchMode('plans'));
   el('showRecordsBtn').addEventListener('click',()=>switchMode('records'));
   el('calendarViewBtn').addEventListener('click',()=>{
-    if(screenMode==='records'){recordView='calendar';applyView(monthKey(TODAY()));}
+    if(screenMode==='records'){recordView='calendar';applyView(lastRecordMonth);}
   });
   el('titleViewBtn').addEventListener('click',()=>{
-    if(screenMode==='records'){recordView='titles';applyView();}
+    if(screenMode==='records'){lastRecordMonth=displayedMonth();recordView='titles';applyView();}
   });
   function scrollToMonth(mk,behavior='smooth') {
+    if(screenMode==='records')lastRecordMonth=mk;
     const targetDate=dateFromKey(mk+'-01');
     if(!el('month-'+mk)) {
       rangeStart=monthDate(targetDate,-6);rangeEnd=monthDate(targetDate,17);
@@ -339,7 +341,7 @@
         const bounds=node.getBoundingClientRect();
         if(bounds.bottom>visibleLine){current=node;break;}
       }
-      if(current){const [year,m]=current.dataset.month.split('-');refs.visibleMonth.textContent=`${year}年${Number(m)}月`;}
+      if(current){const [year,m]=current.dataset.month.split('-');refs.visibleMonth.textContent=`${year}年${Number(m)}月`;if(screenMode==='records')lastRecordMonth=current.dataset.month;}
     });
   }
   refs.scroll.addEventListener('scroll',handleScroll,{passive:true});
