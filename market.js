@@ -276,14 +276,17 @@
     if(message)window.alert(message);
   }
   el('marketPasteBtn').addEventListener('click',async()=>{
+    let text;
     try{
       if(!navigator.clipboard?.readText)throw Error('クリップボードにアクセスできません');
-      const text=await navigator.clipboard.readText();
-      importClipboardCsv(text);
+      text=await navigator.clipboard.readText();
     }catch(err){
       // Safariのクリップボード権限が無い場合にも手動貼り付けで利用できる。
-      showPasteFallback('自動読み取りできませんでした。入力欄にCSVを貼り付けて保存してください。\n'+err.message);
+      showPasteFallback('クリップボードの読み取りが許可されませんでした。入力欄にCSVを貼り付けてください。');
+      return;
     }
+    try{importClipboardCsv(text);}
+    catch(err){window.alert('終値データを取り込めません：'+err.message);}
   });
   el('marketPasteApplyBtn').addEventListener('click',()=>{
     try{
