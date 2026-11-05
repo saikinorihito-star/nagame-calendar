@@ -255,8 +255,8 @@
     }catch(err){window.alert('CSVを読み込めません：'+err.message);}
     finally{event.target.value='';}
   });
-  // バックアップv3からのみ呼び出す。旧バックアップからの復元ではこの関数を呼ばない。
-  function replaceAll(entries){
+  // 旧バックアップからの復元では終値データを変更しない。
+  function validateAll(entries){
     if(!Array.isArray(entries)||entries.length>10000)throw Error('指数履歴の件数を確認してください');
     const next=new Map();
     for(const item of entries){
@@ -264,9 +264,13 @@
       if(next.has(row.date))throw Error('指数履歴の日付が重複しています');
       next.set(row.date,row);
     }
+    return next;
+  }
+  function replaceAll(entries){
+    const next=validateAll(entries);
     persist(next);
     if(chosenDate)showForDate(chosenDate);
     return true;
   }
-  window.MarketArchive={showForDate,getAll:snapshot,replaceAll};
+  window.MarketArchive={showForDate,getAll:snapshot,replaceAll,validateAll};
 })();
