@@ -885,3 +885,221 @@ button:focus-visible,input:focus-visible,select:focus-visible {
     z-index:30;
   }
 }
+
+/* v3: 予定／記録 と カレンダー／タイトル別 の表示切替 */
+.view-switches {
+  display:flex;
+  gap:6px;
+  align-items:center;
+  padding:0 12px 8px;
+  background:#fff;
+}
+.view-segment {
+  display:flex;
+  flex:1;
+  min-width:0;
+  padding:3px;
+  border-radius:11px;
+  background:#f0f3f9;
+  gap:3px;
+}
+.view-choice {
+  flex:1;
+  min-width:0;
+  min-height:32px;
+  padding:6px 3px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  font-size:12px;
+  color:#59677e;
+  font-weight:750;
+  white-space:nowrap;
+}
+.view-choice.active {
+  background:#fff;
+  color:#244786;
+  box-shadow:0 1px 4px #2447861b;
+}
+.view-choice:focus-visible {
+  outline:2px solid #7fa1d6;
+  outline-offset:0;
+}
+.record-pill {
+  color:var(--event-color);
+  border-left:3px solid var(--event-color);
+  background:color-mix(in srgb,var(--event-color) 14%,white);
+  padding:2px 3px;
+  border-radius:4px;
+  font-size:12px;
+  line-height:1.4;
+  font-weight:700;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  white-space:normal;
+  flex-shrink:0;
+}
+.record-body-label {
+  margin-top:13px;
+}
+.record-body-input {
+  resize:vertical;
+  display:block;
+  width:100%;
+  min-height:140px;
+  max-height:45dvh;
+  border:1px solid #e3e8f0;
+  border-radius:11px;
+  background:#fafbfe;
+  color:#20283d;
+  outline:none;
+  padding:12px;
+  font-family:inherit;
+  font-size:16px;
+  line-height:1.6;
+}
+.record-body-input:focus {
+  border-color:#7ba0d6;
+  background:#fff;
+}
+.record-list-note {
+  color:#6b7891;
+  font-size:12px;
+  line-height:1.6;
+  padding:8px 3px 12px;
+}
+.record-item {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  width:100%;
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid #e8ecf3;
+  border-radius:11px;
+  background:#fafbfe;
+  text-align:left;
+}
+.record-item-content {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  flex:1;
+  gap:3px;
+}
+.record-item-title {
+  font-size:14px;
+  font-weight:750;
+  color:#26364e;
+  overflow-wrap:anywhere;
+}
+.record-item-preview {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  color:#66748c;
+  line-height:1.5;
+  font-size:12px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.record-titles {
+  padding:13px 10px 90px;
+}
+.record-list-heading {
+  font-size:16px;
+  font-weight:800;
+  margin:1px 3px 13px;
+}
+.record-group {
+  background:#fff;
+  border:1px solid #e4e9f2;
+  border-radius:13px;
+  margin-bottom:11px;
+  overflow:hidden;
+}
+.record-group-toggle {
+  display:flex;
+  width:100%;
+  gap:9px;
+  align-items:center;
+  min-height:58px;
+  background:#fff;
+  border:0;
+  padding:10px 12px;
+  text-align:left;
+}
+.record-group-dot {
+  flex:none;
+  width:12px;
+  height:12px;
+  background:var(--event-color);
+  border-radius:4px;
+}
+.record-group-title {
+  flex:1;
+  min-width:0;
+  overflow-wrap:anywhere;
+  font-size:15px;
+  font-weight:800;
+  color:#26364e;
+}
+.record-group-count {
+  flex:none;
+  font-size:11px;
+  color:#66748c;
+}
+.record-group-entries {
+  padding:8px 10px 12px;
+  border-top:1px solid #edf0f5;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.record-group-entry {
+  display:flex;
+  width:100%;
+  align-items:center;
+  gap:10px;
+  border:1px solid #edf0f6;
+  border-radius:9px;
+  background:#fafbfe;
+  padding:10px 11px;
+  text-align:left;
+}
+.record-group-entry-meta {
+  flex:1;
+  min-width:0;
+}
+.record-group-entry-date {
+  color:#294b90;
+  font-size:12px;
+  font-weight:750;
+}
+.record-group-entry-text {
+  font-size:12px;
+  line-height:1.5;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  color:#5d6980;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+.record-empty {
+  margin:28px 5px;
+  padding:22px;
+  background:#f5f7fb;
+  color:#63728b;
+  text-align:center;
+  border-radius:13px;
+  font-size:13px;
+  line-height:1.8;
+}
+@media(max-width:360px) {
+  .view-switches{padding-left:8px;padding-right:8px;gap:4px}
+  .view-choice{font-size:11px}
+  .record-titles{padding-left:6px;padding-right:6px}
+}

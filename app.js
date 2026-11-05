@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const STORAGE_KEY = 'nagame-calendar-v1'; // Keep unchanged across app updates to preserve data.
+  const RECORDS_KEY = 'nagame-calendar-records-v1'; // 別キーへ保存し、既存の予定は移行・上書きしない。
   const COLORS = [
     {id:'blue',name:'青',hex:'#3474d5'},
     {id:'mint',name:'緑',hex:'#008e74'},
@@ -95,7 +96,12 @@
     settingsOverlay:el('settingsOverlay'),templateList:el('templateList'),templateForm:el('templateForm'),templateTitle:el('templateTitle'),templatePalette:el('templatePalette'),
     saveTemplateBtn:el('saveTemplateBtn'),cancelTemplateBtn:el('cancelTemplateBtn'),jumpOverlay:el('jumpOverlay'),jumpForm:el('jumpForm'),
     jumpYear:el('jumpYear'),jumpMonth:el('jumpMonth'),toast:el('toast'),toastText:el('toastText'),undoBtn:el('undoBtn'),
-    showCentral:el('showCentral'),showLocal:el('showLocal'),holidayStatus:el('holidayStatus'),raceStatus:el('raceStatus')
+    showCentral:el('showCentral'),showLocal:el('showLocal'),holidayStatus:el('holidayStatus'),raceStatus:el('raceStatus'),
+    recordOverlay:el('recordOverlay'),recordHeading:el('recordHeading'),recordForm:el('recordForm'),
+    recordTitle:el('recordTitle'),recordBody:el('recordBody'),recordPalette:el('recordPalette'),
+    recordFormHeading:el('recordFormHeading'),saveRecordBtn:el('saveRecordBtn'),deleteRecordBtn:el('deleteRecordBtn'),
+    cancelRecordEditBtn:el('cancelRecordEditBtn'),existingRecordsWrap:el('existingRecordsWrap'),
+    existingRecords:el('existingRecords'),recordTitles:el('recordTitles'),recordViewSwitch:el('recordViewSwitch')
   };
   const fmt = (y,m,d) => `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const dateKey = d => fmt(d.getFullYear(),d.getMonth()+1,d.getDate());
@@ -121,7 +127,25 @@
       };
     } catch (err) { console.error('データの読込失敗',err); return {events:[],templates:DEFAULT_TEMPLATES.map(x=>({...x}))}; }
   }
+  function loadRecords() {
+    try {
+      const raw=localStorage.getItem(RECORDS_KEY);
+      if(!raw)return [];
+      const data=JSON.parse(raw);
+      if(!data||data.version!==1||!Array.isArray(data.records))throw Error('記録データの形式が異なります');
+      return data.records.filter(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
+        safeTrim(x.title)&&typeof x.body==='string').map(x=>({
+          id:x.id,date:x.date,title:safeTrim(x.title).slice(0,80),body:x.body.slice(0,10000),
+          color:normalizeColor(x.color),createdAt:typeof x.createdAt==='string'?x.createdAt:'',
+          updatedAt:typeof x.updatedAt==='string'?x.updatedAt:''
+        }));
+    }catch(err){console.error('記録の読み込みに失敗',err);return [];}
+  }
   let state=loadState();
+  let records=loadRecords();
+  let screenMode='plans',recordView='calendar',editingRecordId=null,recordColor='blue';
+  let lastRecordMonth=monthKey(TODAY());
+  const openTitleGroups=new Set();
   let selectedDate=dateKey(TODAY());
   let editingEventId=null,editingTemplateId=null,eventColor='blue',templateColor='blue';
   let rangeStart=monthDate(TODAY(),-6),rangeEnd=monthDate(TODAY(),17);
@@ -130,6 +154,10 @@
   function store() {
     try {localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
     catch(err) {console.error('保存に失敗',err);notify('保存できません。端末の空き容量を確認してください');return false;}
+  }
+  function saveRecords(){
+    try{localStorage.setItem(RECORDS_KEY,JSON.stringify({version:1,records}));return true;}
+    catch(err){console.error('記録を保存できません',err);notify('記録を保存できません。端末の空き容量を確認してください');return false;}
   }
   function notify(message,ids=[]) {
     clearTimeout(toastTimer);undoIds=ids;
@@ -145,6 +173,8 @@
     refs.toast.classList.add('hidden');undoIds=[];
   });
   const eventSort = (a,b) => (a.time||'').localeCompare(b.time||'') || a.title.localeCompare(b.title,'ja');
+  const recordSort=(a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')||a.title.localeCompare(b.title,'ja');
+  const recordsAt=date=>records.filter(r=>r.date===date).sort(recordSort);
   const eventsAt = date => state.events.filter(e=>e.date===date).sort(eventSort);
   function make(tag,className,text) {
     const node=document.createElement(tag);
@@ -158,14 +188,16 @@
     const startDay=new Date(y,mo,1).getDay();
     const nDays=new Date(y,mo+1,0).getDate();
     const rows=Math.ceil((startDay+nDays)/7);
-    const monthEvents=state.events.filter(e=>e.date.startsWith(mk+'-'));
+    const monthItems=screenMode==='plans'
+      ?state.events.filter(e=>e.date.startsWith(mk+'-'))
+      :records.filter(r=>r.date.startsWith(mk+'-'));
     const byDay=new Map();
-    for(const e of monthEvents){if(!byDay.has(e.date))byDay.set(e.date,[]);byDay.get(e.date).push(e);}
-    for(const list of byDay.values())list.sort(eventSort);
+    for(const item of monthItems){if(!byDay.has(item.date))byDay.set(item.date,[]);byDay.get(item.date).push(item);}
+    for(const list of byDay.values())list.sort(screenMode==='plans'?eventSort:recordSort);
     const section=make('section','month-card');section.id='month-'+mk;section.dataset.month=mk;
     const top=make('div','month-top');const left=make('div');
     left.append(make('span','month-name',`${mo+1}月`),make('span','month-year',`${y}年`));
-    top.append(left,make('span','month-count',`${monthEvents.length}件の予定`));section.append(top);
+    top.append(left,make('span','month-count',`${monthItems.length}件の${screenMode==='plans'?'予定':'記録'}`));section.append(top);
     const week=make('div','weekday-grid');for(const w of '日月火水木金土')week.append(make('div','weekday',w));section.append(week);
     const grid=make('div','day-grid');
     for(let idx=0;idx<rows*7;idx++){
@@ -175,25 +207,31 @@
       const classes=['day'];if(dayOfWeek===0)classes.push('is-sunday');if(dayOfWeek===6)classes.push('is-saturday');
       if(holiday)classes.push('is-holiday');if(key===dateKey(TODAY()))classes.push('today');
       const btn=make('button',classes.join(' '));btn.type='button';btn.dataset.date=key;
-      btn.setAttribute('aria-label',japaneseDate(key)+(holiday?` ${holiday}`:'')+' 予定を入力');
+      btn.setAttribute('aria-label',japaneseDate(key)+(holiday?` ${holiday}`:'')+(screenMode==='plans'?' 予定を入力':' 記録を書く'));
       btn.append(make('span','day-number',String(dayNum)));
       if(holiday)btn.append(make('span','holiday-label',holiday));
       const entries=byDay.get(key)||[];
-      const races=raceAt(key);
-      // 登録済み予定を優先して3件まで表示し、残りの枠を競馬日程に使用する。
-      // 日付マスは内容に応じて高さが広がるため、3件目も隠さず表示できる。
-      const count=Math.min(3,entries.length);
-      entries.slice(0,count).forEach(e=>{
-        const pill=make('span','event-pill',(e.time?e.time+' ':'')+e.title);
-        pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
-      });
-      races.slice(0,3-count).forEach(r=>{
-        const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
-        pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
-      });
-      const allCount=entries.length+races.length;
-      if(allCount>3)btn.append(make('span','event-extra',`＋${allCount-3}件`));
-      btn.addEventListener('click',()=>openDay(key));grid.append(btn);
+      if(screenMode==='records'){
+        entries.slice(0,3).forEach(record=>{
+          const pill=make('span','record-pill',record.title);
+          pill.style.setProperty('--event-color',colorHex(record.color));btn.append(pill);
+        });
+        if(entries.length>3)btn.append(make('span','event-extra',`＋${entries.length-3}件`));
+      }else{
+        // 従来どおり予定を優先し、3件までの空き枠にGⅠ日程を表示する。
+        const races=raceAt(key),count=Math.min(3,entries.length);
+        entries.slice(0,count).forEach(e=>{
+          const pill=make('span','event-pill',(e.time?e.time+' ':'')+e.title);
+          pill.style.setProperty('--event-color',colorHex(e.color));btn.append(pill);
+        });
+        races.slice(0,3-count).forEach(r=>{
+          const pill=make('span','race-pill'+(r.category==='local'?' local':''),shortRaceName(r.name));
+          pill.title=`${r.grade} ${r.name}（${r.venue}）`;btn.append(pill);
+        });
+        const allCount=entries.length+races.length;
+        if(allCount>3)btn.append(make('span','event-extra',`＋${allCount-3}件`));
+      }
+      btn.addEventListener('click',()=>screenMode==='records'?openRecordDay(key):openDay(key));grid.append(btn);
     }
     section.append(grid);
     if(!Object.keys(HOLIDAYS).some(k=>k.startsWith(y+'-')))section.append(make('div','holiday-warning','この年の祝日データは未収録です'));
@@ -223,7 +261,61 @@
     const date=dateFromKey(mk+'-01');old.replaceWith(renderMonth(date));
   }
   function refreshMonthSet(months) {for(const mk of months)refreshMonth(mk);}
+
+  function setChoice(id,active){
+    const node=el(id);
+    node.classList.toggle('active',active);
+    node.setAttribute('aria-pressed',String(active));
+  }
+  function displayedMonth(){
+    const match=refs.visibleMonth.textContent.match(/(\d{4})年(\d+)月/);
+    return match?`${match[1]}-${String(Number(match[2])).padStart(2,'0')}`:monthKey(TODAY());
+  }
+  function applyView(mk=monthKey(TODAY())){
+    const list=screenMode==='records'&&recordView==='titles';
+    refs.recordViewSwitch.classList.toggle('hidden',screenMode!=='records');
+    refs.months.classList.toggle('hidden',list);
+    el('scrollEnding').classList.toggle('hidden',list);
+    el('startTip').classList.toggle('hidden',list);
+    refs.recordTitles.classList.toggle('hidden',!list);
+    const add=el('quickAddBtn');
+    add.setAttribute('aria-label',screenMode==='records'?'今日の記録を追加':'今日の予定を追加');
+    add.querySelector('.floating-add-label').textContent=screenMode==='records'?'今日に記録':'今日に追加';
+    setChoice('showPlansBtn',screenMode==='plans');
+    setChoice('showRecordsBtn',screenMode==='records');
+    setChoice('calendarViewBtn',!list);
+    setChoice('titleViewBtn',list);
+    if(list){
+      refs.visibleMonth.textContent='記録・タイトル別';
+      el('todayBtn').classList.add('hidden');
+      renderRecordTitles();
+      refs.scroll.scrollTop=0;
+    }else{
+      el('todayBtn').classList.remove('hidden');
+      buildCalendar();
+      scrollToMonth(mk,'instant');
+      el('startTip').textContent=screenMode==='plans'
+        ?'日付をタップすると予定を追加できます。月は上下にスクロールできます。'
+        :'日付をタップすると記録を書けます。タイトル別の一覧にも切り替えできます。';
+    }
+  }
+  function switchMode(mode){
+    if(mode===screenMode)return;
+    const mk=displayedMonth();
+    screenMode=mode;
+    if(mode==='plans')recordView='calendar';
+    applyView(mk);
+  }
+  el('showPlansBtn').addEventListener('click',()=>switchMode('plans'));
+  el('showRecordsBtn').addEventListener('click',()=>switchMode('records'));
+  el('calendarViewBtn').addEventListener('click',()=>{
+    if(screenMode==='records'){recordView='calendar';applyView(lastRecordMonth);}
+  });
+  el('titleViewBtn').addEventListener('click',()=>{
+    if(screenMode==='records'){lastRecordMonth=displayedMonth();recordView='titles';applyView();}
+  });
   function scrollToMonth(mk,behavior='smooth') {
+    if(screenMode==='records')lastRecordMonth=mk;
     const targetDate=dateFromKey(mk+'-01');
     if(!el('month-'+mk)) {
       rangeStart=monthDate(targetDate,-6);rangeEnd=monthDate(targetDate,17);
@@ -237,6 +329,8 @@
     refs.visibleMonth.textContent=`${targetDate.getFullYear()}年${targetDate.getMonth()+1}月`;
   }
   function handleScroll() {
+    // タイトル別一覧のスクロールを月カレンダーの無限スクロール処理に渡さない。
+    if(screenMode==='records'&&recordView==='titles')return;
     if(scrollFrame)return;
     scrollFrame=requestAnimationFrame(()=>{
       scrollFrame=0;
@@ -249,12 +343,12 @@
         const bounds=node.getBoundingClientRect();
         if(bounds.bottom>visibleLine){current=node;break;}
       }
-      if(current){const [year,m]=current.dataset.month.split('-');refs.visibleMonth.textContent=`${year}年${Number(m)}月`;}
+      if(current){const [year,m]=current.dataset.month.split('-');refs.visibleMonth.textContent=`${year}年${Number(m)}月`;if(screenMode==='records')lastRecordMonth=current.dataset.month;}
     });
   }
   refs.scroll.addEventListener('scroll',handleScroll,{passive:true});
   el('todayBtn').addEventListener('click',()=>scrollToMonth(monthKey(TODAY())));
-  el('quickAddBtn').addEventListener('click',()=>openDay(dateKey(TODAY())));
+  el('quickAddBtn').addEventListener('click',()=>screenMode==='records'?openRecordDay(dateKey(TODAY())):openDay(dateKey(TODAY())));
 
   function setColorPalette(container,selected,onSelect) {
     container.replaceChildren();
@@ -370,6 +464,155 @@
     refreshMonth(target.date.slice(0,7));closeDay();notify('予定を削除しました');
   });
 
+
+  // 日記の本文はtextContentで描画し、HTMLとして実行されない。
+  // 予定は別のキーに保存されるので、この操作で既存の予定を変更しない。
+  function chooseRecordColor(id){
+    recordColor=id;
+    setColorPalette(refs.recordPalette,recordColor,chooseRecordColor);
+  }
+  function closeRecordDay(){
+    hideOverlay(refs.recordOverlay);
+    editingRecordId=null;
+  }
+  function resetRecordForm(){
+    editingRecordId=null;
+    refs.recordForm.reset();
+    refs.recordTitle.value='';
+    refs.recordBody.value='';
+    refs.recordFormHeading.textContent='新しい記録を入力';
+    refs.saveRecordBtn.textContent='記録を保存';
+    refs.deleteRecordBtn.classList.add('hidden');
+    refs.cancelRecordEditBtn.classList.add('hidden');
+    chooseRecordColor(recordColor);
+  }
+  function renderRecordDay(){
+    refs.recordHeading.textContent=japaneseDate(selectedDate);
+    const list=recordsAt(selectedDate);
+    refs.existingRecords.replaceChildren();
+    refs.existingRecordsWrap.classList.toggle('hidden',list.length===0);
+    for(const item of list){
+      const btn=make('button','record-item');
+      btn.type='button';
+      const dot=make('span','existing-dot');
+      dot.style.setProperty('--event-color',colorHex(item.color));
+      const content=make('span','record-item-content');
+      content.append(make('span','record-item-title',item.title));
+      if(item.body)content.append(make('span','record-item-preview',item.body));
+      btn.append(dot,content,make('span','edit-cue','編集 ›'));
+      btn.addEventListener('click',()=>editRecord(item.id));
+      refs.existingRecords.append(btn);
+    }
+  }
+  function openRecordDay(key,id=null){
+    selectedDate=key;
+    resetRecordForm();
+    renderRecordDay();
+    showOverlay(refs.recordOverlay);
+    if(id)editRecord(id);
+    const body=refs.recordOverlay.querySelector('.day-sheet-body');
+    if(body)body.scrollTop=0;
+  }
+  function editRecord(id){
+    const item=records.find(r=>r.id===id);
+    if(!item)return;
+    editingRecordId=id;
+    selectedDate=item.date;
+    refs.recordTitle.value=item.title;
+    refs.recordBody.value=item.body;
+    chooseRecordColor(item.color);
+    refs.recordFormHeading.textContent='記録を編集';
+    refs.saveRecordBtn.textContent='変更を保存';
+    refs.deleteRecordBtn.classList.remove('hidden');
+    refs.cancelRecordEditBtn.classList.remove('hidden');
+  }
+  function refreshRecordDisplay(key){
+    refreshMonth(key.slice(0,7));
+    if(screenMode==='records'&&recordView==='titles')renderRecordTitles();
+  }
+  function renderRecordTitles(){
+    const container=refs.recordTitles;
+    container.replaceChildren();
+    container.append(make('h2','record-list-heading','タイトル別の記録'));
+    if(!records.length){
+      container.append(make('div','record-empty','記録はまだありません。今日に記録から追加できます。'));
+      return;
+    }
+    const groups=new Map();
+    for(const record of records){
+      if(!groups.has(record.title))groups.set(record.title,[]);
+      groups.get(record.title).push(record);
+    }
+    const sorted=[...groups].sort((a,b)=>{
+      const aDate=a[1].reduce((m,r)=>r.date>m?r.date:m,'');
+      const bDate=b[1].reduce((m,r)=>r.date>m?r.date:m,'');
+      return bDate.localeCompare(aDate)||a[0].localeCompare(b[0],'ja');
+    });
+    container.append(make('div','record-list-note',`${groups.size}タイトル・${records.length}件の記録。タイトルを押すと内容が開きます。`));
+    for(const [title,group] of sorted){
+      const ordered=[...group].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
+      const box=make('section','record-group');
+      const header=make('button','record-group-toggle');
+      header.type='button';
+      const dot=make('span','record-group-dot');
+      dot.style.setProperty('--event-color',colorHex(ordered[0].color));
+      header.append(dot,make('span','record-group-title',title),
+        make('span','record-group-count',`${group.length}件 ${openTitleGroups.has(title)?'▲':'▼'}`));
+      header.setAttribute('aria-expanded',String(openTitleGroups.has(title)));
+      header.addEventListener('click',()=>{
+        if(openTitleGroups.has(title))openTitleGroups.delete(title);
+        else openTitleGroups.add(title);
+        renderRecordTitles();
+      });
+      box.append(header);
+      if(openTitleGroups.has(title)){
+        const entries=make('div','record-group-entries');
+        for(const item of ordered){
+          const button=make('button','record-group-entry');
+          button.type='button';
+          const inner=make('span','record-group-entry-meta');
+          inner.append(make('span','record-group-entry-date',japaneseDate(item.date)));
+          if(item.body)inner.append(make('span','record-group-entry-text',item.body.slice(0,160)));
+          button.append(inner,make('span','edit-cue','詳細・編集 ›'));
+          button.addEventListener('click',()=>openRecordDay(item.date,item.id));
+          entries.append(button);
+        }
+        box.append(entries);
+      }
+      container.append(box);
+    }
+  }
+  refs.recordForm.addEventListener('submit',event=>{
+    event.preventDefault();
+    const title=safeTrim(refs.recordTitle.value).slice(0,80);
+    if(!title){notify('記録のタイトルを入力してください');return;}
+    const body=String(refs.recordBody.value||'').slice(0,10000);
+    const oldRecords=records.map(r=>({...r}));
+    const now=new Date().toISOString(),editing=!!editingRecordId;
+    if(editing){
+      const item=records.find(r=>r.id===editingRecordId);
+      if(!item)return;
+      item.title=title;item.body=body;item.color=recordColor;item.updatedAt=now;
+    }else{
+      records.push({id:makeId(),date:selectedDate,title,body,color:recordColor,createdAt:now,updatedAt:now});
+    }
+    if(!saveRecords()){records=oldRecords;return;}
+    refreshRecordDisplay(selectedDate);
+    closeRecordDay();
+    notify(editing?'記録を更新しました':'記録を保存しました');
+  });
+  refs.deleteRecordBtn.addEventListener('click',()=>{
+    const item=records.find(r=>r.id===editingRecordId);
+    if(!item)return;
+    if(!confirm(`「${item.title}」の記録を削除しますか？`))return;
+    const before=records;
+    records=records.filter(r=>r.id!==item.id);
+    if(!saveRecords()){records=before;return;}
+    refreshRecordDisplay(item.date);
+    closeRecordDay();
+    notify('記録を削除しました');
+  });
+  refs.cancelRecordEditBtn.addEventListener('click',resetRecordForm);
   function resetTemplateForm() {
     editingTemplateId=null;refs.templateForm.reset();refs.templateTitle.value='';
     refs.saveTemplateBtn.textContent='ボタンを追加';refs.cancelTemplateBtn.classList.add('hidden');chooseTemplateColor(templateColor);
@@ -491,7 +734,7 @@
 
   // Export and import are deliberately manual: no account, network sync or external access.
   el('exportBtn').addEventListener('click',()=>{
-    const payload={app:'nagame-calendar',version:1,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates};
+    const payload={app:'nagame-calendar',version:2,exportedAt:new Date().toISOString(),events:state.events,templates:state.templates,records};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');
     a.href=url;a.download=`ながめるカレンダー-バックアップ-${dateKey(TODAY())}.json`;
@@ -503,15 +746,43 @@
     const file=e.target.files?.[0];if(!file)return;
     try{
       const v=JSON.parse(await file.text());
-      if(v.app!=='nagame-calendar'||v.version!==1||!Array.isArray(v.events)||!Array.isArray(v.templates))throw Error('形式が異なります');
-      if(v.events.length>50000||v.templates.length>200)throw Error('データ件数が多すぎます');
+      if(v.app!=='nagame-calendar'||![1,2].includes(v.version)||!Array.isArray(v.events)||!Array.isArray(v.templates)||(v.version===2&&!Array.isArray(v.records)))throw Error('形式が異なります');
+      if(v.events.length>50000||v.templates.length>200||(v.version===2&&v.records.length>50000))throw Error('データ件数が多すぎます');
       if(!v.events.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&(!x.time||/^([01]\d|2[0-3]):[0-5]\d$/.test(x.time))))throw Error('予定データに不正な値があります');
       if(!v.templates.every(x=>x&&typeof x.id==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=40))throw Error('登録ボタンに不正な値があります');
-      if(!confirm(`バックアップから予定${v.events.length}件を読み込みますか？\n現在の予定は置き換えられます。`))return;
-      const old=state;
-      state={events:v.events.map(x=>({id:x.id,date:x.date,title:x.title.trim(),color:normalizeColor(x.color),time:x.time||''})),templates:v.templates.map(x=>({id:x.id,title:x.title.trim(),color:normalizeColor(x.color)}))};
-      if(!store()){state=old;return;}
-      buildCalendar();renderTemplates();hideOverlay(refs.settingsOverlay);scrollToMonth(monthKey(TODAY()),'instant');notify(`${state.events.length}件の予定を読み込みました`);
+      if(v.version===2&&!v.records.every(x=>x&&typeof x.id==='string'&&isRealDate(x.date)&&
+        typeof x.title==='string'&&safeTrim(x.title)&&safeTrim(x.title).length<=80&&
+        typeof x.body==='string'&&x.body.length<=10000))throw Error('記録データに不正な値があります');
+      const hasRecords=v.version===2;
+      const message=hasRecords
+        ?`予定${v.events.length}件・記録${v.records.length}件を復元しますか？\n現在の予定と記録は置き換えられます。`
+        :`予定${v.events.length}件を復元しますか？\n従来形式なので、現在の記録は保持します。`;
+      if(!confirm(message))return;
+      const old=state,oldRecords=records,oldRecordRaw=localStorage.getItem(RECORDS_KEY);
+      const imported={events:v.events.map(x=>({id:x.id,date:x.date,title:x.title.trim(),color:normalizeColor(x.color),time:x.time||''})),
+        templates:v.templates.map(x=>({id:x.id,title:x.title.trim(),color:normalizeColor(x.color)}))};
+      // 古いversion 1バックアップは予定・登録ボタンのみ復元し、記録は保持。
+      if(hasRecords){
+        records=v.records.map(x=>({id:x.id,date:x.date,title:x.title.trim(),body:x.body,
+          color:normalizeColor(x.color),createdAt:typeof x.createdAt==='string'?x.createdAt:'',
+          updatedAt:typeof x.updatedAt==='string'?x.updatedAt:''}));
+        if(!saveRecords()){records=oldRecords;return;}
+      }
+      state=imported;
+      if(!store()){
+        state=old;
+        if(hasRecords){
+          records=oldRecords;
+          try{
+            if(oldRecordRaw===null)localStorage.removeItem(RECORDS_KEY);
+            else localStorage.setItem(RECORDS_KEY,oldRecordRaw);
+          }catch(err){console.error('復元失敗時の巻き戻しに失敗',err);}
+        }
+        return;
+      }
+      buildCalendar();renderTemplates();renderRecordTitles();hideOverlay(refs.settingsOverlay);
+      applyView(monthKey(TODAY()));
+      notify(`${state.events.length}件の予定${hasRecords?'・'+records.length+'件の記録':''}を読み込みました`);
     } catch(error){notify('読み込めません：'+error.message);}finally{e.target.value='';}
   });
 
@@ -525,20 +796,23 @@
   el('jumpBtn').addEventListener('click',showJump);
   refs.jumpForm.addEventListener('submit',e=>{
     e.preventDefault();const mk=`${refs.jumpYear.value}-${String(refs.jumpMonth.value).padStart(2,'0')}`;
-    hideOverlay(refs.jumpOverlay);scrollToMonth(mk,'instant');
+    hideOverlay(refs.jumpOverlay);
+    if(screenMode==='records'&&recordView==='titles'){recordView='calendar';applyView(mk);}
+    else scrollToMonth(mk,'instant');
   });
   document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>{
     const type=btn.dataset.close;
-    if(type==='day')closeDay();else if(type==='settings')hideOverlay(refs.settingsOverlay);else if(type==='jump')hideOverlay(refs.jumpOverlay);
+    if(type==='day')closeDay();else if(type==='record')closeRecordDay();else if(type==='settings')hideOverlay(refs.settingsOverlay);else if(type==='jump')hideOverlay(refs.jumpOverlay);
   }));
   document.addEventListener('keydown',e=>{
     if(e.key!=='Escape')return;
-    if(!refs.dayOverlay.classList.contains('hidden'))closeDay();
+    if(!refs.recordOverlay.classList.contains('hidden'))closeRecordDay();
+    else if(!refs.dayOverlay.classList.contains('hidden'))closeDay();
     else if(!refs.settingsOverlay.classList.contains('hidden'))hideOverlay(refs.settingsOverlay);
     else if(!refs.jumpOverlay.classList.contains('hidden'))hideOverlay(refs.jumpOverlay);
   });
 
-  buildCalendar();chooseEventColor('blue');chooseTemplateColor('blue');
+  buildCalendar();chooseEventColor('blue');chooseTemplateColor('blue');chooseRecordColor('blue');
   renderOfficialStatus();
   if(location.protocol!=='file:')refreshOfficialData();
   requestAnimationFrame(()=>scrollToMonth(monthKey(TODAY()),'instant'));

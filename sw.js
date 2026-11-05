@@ -1,6 +1,6 @@
 // 静的ファイルもネット接続時には最新版を優先し、自動更新後の古い表示を防止。
 // オフライン時だけ前回取得したファイルを使用する。
-const CACHE='nagame-calendar-static-v2-checked';
+const CACHE='nagame-calendar-static-v3-journal';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./holidays.js','./races.js','./data/holidays.json','./data/races.json','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 const paths=new Set(ASSETS.map(asset=>new URL(asset,self.registration.scope).pathname));
 self.addEventListener('install',event=>{
