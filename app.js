@@ -476,7 +476,46 @@
     hideOverlay(refs.recordOverlay);
     editingRecordId=null;
   }
+  let readingRecordId=null;
+  const recordScroll=refs.recordOverlay.querySelector('.day-sheet-body');
+  function syncRecordViewport(){
+    const viewport=window.visualViewport;
+    refs.recordOverlay.style.setProperty('--record-viewport-height',(viewport?viewport.height:window.innerHeight)+'px');
+    refs.recordOverlay.style.setProperty('--record-viewport-top',(viewport?viewport.offsetTop:0)+'px');
+    requestAnimationFrame(sizeRecordBody);
+  }
+  window.visualViewport?.addEventListener('resize',syncRecordViewport);
+  window.visualViewport?.addEventListener('scroll',syncRecordViewport);
+  window.addEventListener('resize',syncRecordViewport);
+  function sizeRecordBody(){
+    if(refs.recordForm.classList.contains('hidden'))return;
+    const scroll=recordScroll.scrollTop;
+    refs.recordBody.style.height='auto';
+    refs.recordBody.style.height=refs.recordBody.scrollHeight+'px';
+    recordScroll.scrollTop=scroll;
+  }
+  refs.recordBody.addEventListener('input',()=>{
+    sizeRecordBody();
+    if(document.activeElement===refs.recordBody&&refs.recordBody.selectionEnd===refs.recordBody.value.length){
+      const bottom=refs.recordBody.getBoundingClientRect().bottom;
+      const edge=recordScroll.getBoundingClientRect().bottom;
+      if(bottom>edge)recordScroll.scrollTop+=bottom-edge+12;
+    }
+  });
+  function readRecord(id){
+    const item=records.find(r=>r.id===id);if(!item)return;
+    readingRecordId=id;editingRecordId=null;
+    refs.recordForm.classList.add('hidden');el('recordReader').classList.remove('hidden');
+    el('recordReadTitle').textContent=item.title;el('recordReadBody').textContent=item.body||'（本文はありません）';
+    requestAnimationFrame(()=>el('recordReadTitle').scrollIntoView({block:'start'}));
+  }
+  el('recordReadEdit').addEventListener('click',()=>editRecord(readingRecordId));
+  el('recordReadEditBottom').addEventListener('click',()=>editRecord(readingRecordId));
+  el('recordReadNew').addEventListener('click',()=>{resetRecordForm();refs.recordTitle.focus();});
   function resetRecordForm(){
+    readingRecordId=null;
+    el('recordReader').classList.add('hidden');refs.recordForm.classList.remove('hidden');
+    refs.recordBody.style.height='';
     editingRecordId=null;
     refs.recordForm.reset();
     refs.recordTitle.value='';
@@ -500,8 +539,8 @@
       const content=make('span','record-item-content');
       content.append(make('span','record-item-title',item.title));
       if(item.body)content.append(make('span','record-item-preview',item.body));
-      btn.append(dot,content,make('span','edit-cue','編集 ›'));
-      btn.addEventListener('click',()=>editRecord(item.id));
+      btn.append(dot,content,make('span','edit-cue','読む ›'));
+      btn.addEventListener('click',()=>readRecord(item.id));
       refs.existingRecords.append(btn);
     }
   }
@@ -509,11 +548,13 @@
     selectedDate=key;
     resetRecordForm();
     renderRecordDay();
+    syncRecordViewport();
     showOverlay(refs.recordOverlay);
     window.MarketArchive?.showForDate(key);
-    if(id)editRecord(id);
+    if(id)readRecord(id);
     const body=refs.recordOverlay.querySelector('.day-sheet-body');
     if(body)body.scrollTop=0;
+    requestAnimationFrame(sizeRecordBody);
   }
   window.openCalendarRecordDate=(date)=>{
     if(screenMode!=='records')switchMode('records');
@@ -522,6 +563,7 @@
   function editRecord(id){
     const item=records.find(r=>r.id===id);
     if(!item)return;
+    el('recordReader').classList.add('hidden');refs.recordForm.classList.remove('hidden');
     editingRecordId=id;
     selectedDate=item.date;
     refs.recordTitle.value=item.title;
@@ -531,6 +573,9 @@
     refs.saveRecordBtn.textContent='変更を保存';
     refs.deleteRecordBtn.classList.remove('hidden');
     refs.cancelRecordEditBtn.classList.remove('hidden');
+    sizeRecordBody();
+    refs.recordTitle.focus({preventScroll:true});
+    refs.recordTitle.scrollIntoView({block:'center'});
   }
   function refreshRecordDisplay(key){
     refreshMonth(key.slice(0,7));

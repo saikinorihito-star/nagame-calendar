@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./styles.css?v=20261109-plan-touch">
+  <link rel="stylesheet" href="./styles.css?v=20261109-record-reader">
   <title>ながめるカレンダー</title>
 </head>
 <body>
@@ -140,6 +140,12 @@
           <div class="section-heading">この日の記録</div>
           <div id="existingRecords" class="existing-events"></div>
         </div>
+        <article id="recordReader" class="hidden" aria-labelledby="recordReadTitle">
+          <div class="record-reader-actions"><button id="recordReadEdit" type="button" class="secondary-btn">この記録を編集</button><button id="recordReadNew" type="button" class="ghost-btn">新しい記録を書く</button></div>
+          <h3 id="recordReadTitle" tabindex="-1"></h3>
+          <div id="recordReadBody"></div>
+          <button id="recordReadEditBottom" type="button" class="secondary-btn">この記録を編集</button>
+        </article>
         <form id="recordForm" autocomplete="off">
           <div class="section-heading" id="recordFormHeading">新しい記録を入力</div>
           <label class="small-label" for="recordTitle">タイトル</label>
@@ -221,7 +227,7 @@
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toastText"></span><button id="undoBtn" class="undo-btn hidden" type="button">取り消す</button></div>
   <script src="./holidays.js"></script>
   <script src="./races.js"></script>
-  <script src="./app.js"></script>
+  <script src="./app.js?v=20261109-record-reader"></script>
   <script src="./market.js?v=20261106-index-cards"></script>
 </body>
 </html>

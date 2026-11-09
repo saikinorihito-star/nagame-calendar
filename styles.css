@@ -1495,3 +1495,55 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   color:#345b9e;
   white-space:nowrap;
 }
+
+/* 記録詳細：キーボードの可視領域に収め、本文を含めて一つの領域でスクロール。 */
+#recordOverlay {
+  top:var(--record-viewport-top,0px);
+  bottom:auto;
+  height:var(--record-viewport-height,100dvh);
+  padding-top:calc(12px + env(safe-area-inset-top));
+}
+#recordOverlay > .sheet {
+  height:100%;
+  max-height:100%;
+  min-height:0;
+}
+#recordOverlay .sheet-header {flex-shrink:0}
+#recordOverlay .sheet-header h2 {font-size:clamp(18px,5vw,23px)}
+#recordOverlay .day-sheet-body {
+  flex:1 1 0;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scroll-padding:16px;
+  padding-bottom:calc(32px + env(safe-area-inset-bottom));
+}
+#recordTitle {
+  height:56px;
+  font-size:18px;
+  padding:14px;
+}
+#recordBody {
+  min-height:max(320px,48svh);
+  max-height:none;
+  overflow-y:hidden;
+  resize:none;
+  font-size:18px;
+  line-height:1.9;
+  padding:16px;
+  scroll-margin:16px;
+}
+#recordForm .form-actions {gap:10px}
+#recordForm .form-actions button {min-height:48px;font-size:16px}
+#recordReader {padding:12px 0 24px}
+.record-reader-actions {display:flex;gap:10px;flex-wrap:wrap}
+#recordReader button {min-height:44px;font-size:16px}
+#recordReadTitle {font-size:23px;line-height:1.5;overflow-wrap:anywhere;scroll-margin-top:16px}
+#recordReadBody {font-size:18px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:16px 0 24px}
+/* 詳細・履歴のどちらでも指数は横長カード。数値の途中改行を防ぐ。 */
+.market-daily-values {grid-template-columns:minmax(0,1fr);gap:10px}
+.market-value-card {padding:12px 14px}
+.market-value-name {font-size:13px}
+.market-value-number {font-size:clamp(20px,6vw,24px);white-space:nowrap;overflow-wrap:normal;line-height:1.4}
+.market-value-change {font-size:13px;line-height:1.6}
+.market-change-amount,.market-change-rate {display:block;white-space:nowrap}
