@@ -1429,3 +1429,69 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   display:block;
   white-space:nowrap;
 }
+
+/* 予定登録だけのタッチ領域。日記・設定の共通部品には適用しない。 */
+#dayOverlay #eventPalette {
+  display:grid;
+  grid-template-columns:repeat(6,44px);
+  justify-content:space-between;
+  gap:4px;
+}
+#dayOverlay #eventPalette .color-option {
+  width:44px;
+  height:44px;
+}
+#dayOverlay .event-extras {
+  flex-wrap:wrap;
+  gap:8px;
+}
+#dayOverlay .time-row {
+  width:100%;
+  min-height:52px;
+  padding:4px;
+  gap:10px;
+  border-radius:10px;
+  background:#f3f6fb;
+  font-size:16px;
+  cursor:pointer;
+}
+#dayOverlay #useTime {
+  flex:none;
+  width:44px;
+  height:44px;
+  margin:0;
+}
+#dayOverlay #eventTime {
+  min-height:44px;
+  max-width:100%;
+  font-size:16px;
+}
+#dayOverlay .existing-item {
+  display:grid;
+  grid-template-columns:11px minmax(0,1fr) auto auto;
+  gap:8px;
+  padding:8px;
+  min-height:60px;
+}
+#dayOverlay .existing-text {
+  grid-column:2;
+}
+#dayOverlay .existing-time {
+  grid-column:3;
+  font-size:16px;
+  font-weight:700;
+  color:#59677c;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+#dayOverlay .edit-cue {
+  grid-column:4;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  min-height:44px;
+  font-size:15px;
+  color:#345b9e;
+  white-space:nowrap;
+}
