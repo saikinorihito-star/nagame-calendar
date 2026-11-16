@@ -8,7 +8,10 @@
     {id:'orange',name:'オレンジ',hex:'#ce802d'},
     {id:'pink',name:'ピンク',hex:'#cc5a86'},
     {id:'purple',name:'紫',hex:'#7958bd'},
-    {id:'gray',name:'グレー',hex:'#65758c'}
+    {id:'gray',name:'グレー',hex:'#65758c'},
+    {id:'red',name:'赤',hex:'#bf4049'},
+    {id:'gold',name:'黄',hex:'#967000'},
+    {id:'cyan',name:'水色',hex:'#187e9b'}
   ];
   const DEFAULT_TEMPLATES = [
     {id:'default-off',title:'休み',color:'mint'},
