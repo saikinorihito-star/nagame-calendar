@@ -1432,10 +1432,10 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 
 /* 予定登録だけのタッチ領域。日記・設定の共通部品には適用しない。 */
 #dayOverlay #eventPalette {
-  display:grid;
-  grid-template-columns:repeat(6,44px);
-  justify-content:space-between;
-  gap:4px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-start;
+  gap:12px 10px;
 }
 #dayOverlay #eventPalette .color-option {
   width:44px;
@@ -1547,3 +1547,8 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 .market-value-number {font-size:clamp(20px,6vw,24px);white-space:nowrap;overflow-wrap:normal;line-height:1.4}
 .market-value-change {font-size:13px;line-height:1.6}
 .market-change-amount,.market-change-rate {display:block;white-space:nowrap}
+/* 予定・記録・テンプレートで共有する9色のパレット。
+   小さいiPhone幅では折り返して、画面外にはみ出さない。 */
+.palette {
+  flex-wrap:wrap;
+}
