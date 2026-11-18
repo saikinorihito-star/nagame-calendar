@@ -273,6 +273,189 @@
       "venue": "大井",
       "category": "local",
       "grade": "GⅠ"
+    },
+    {
+      "date": "2027-02-21",
+      "name": "フェブラリーステークス",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-03-28",
+      "name": "高松宮記念",
+      "venue": "中京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-04-04",
+      "name": "大阪杯",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-04-11",
+      "name": "桜花賞",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-04-17",
+      "name": "中山グランドジャンプ",
+      "venue": "中山",
+      "category": "central",
+      "grade": "J・GⅠ"
+    },
+    {
+      "date": "2027-04-18",
+      "name": "皐月賞",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-05-02",
+      "name": "天皇賞（春）",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-05-09",
+      "name": "NHKマイルカップ",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-05-16",
+      "name": "ヴィクトリアマイル",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-05-23",
+      "name": "オークス",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-05-30",
+      "name": "日本ダービー",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-06-06",
+      "name": "安田記念",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-06-13",
+      "name": "宝塚記念",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-09-26",
+      "name": "スプリンターズステークス",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-10-17",
+      "name": "秋華賞",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-10-24",
+      "name": "菊花賞",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-10-31",
+      "name": "天皇賞（秋）",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-11-14",
+      "name": "エリザベス女王杯",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-11-21",
+      "name": "マイルチャンピオンシップ",
+      "venue": "京都",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-11-28",
+      "name": "ジャパンカップ",
+      "venue": "東京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-12-05",
+      "name": "チャンピオンズカップ",
+      "venue": "中京",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-12-12",
+      "name": "阪神ジュベナイルフィリーズ",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-12-19",
+      "name": "朝日杯フューチュリティステークス",
+      "venue": "阪神",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-12-25",
+      "name": "中山大障害",
+      "venue": "中山",
+      "category": "central",
+      "grade": "J・GⅠ"
+    },
+    {
+      "date": "2027-12-26",
+      "name": "有馬記念",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
+    },
+    {
+      "date": "2027-12-28",
+      "name": "ホープフルステークス",
+      "venue": "中山",
+      "category": "central",
+      "grade": "GⅠ"
     }
-  ]
+  ],
+  "updatedAt": "2026-11-18T00:33:32+00:00"
 }
