@@ -1,7 +1,7 @@
 // 静的ファイルもネット接続時には最新版を優先し、自動更新後の古い表示を防止。
 // オフライン時だけ前回取得したファイルを使用する。
-const CACHE='nagame-calendar-static-v13-palette9';
-const ASSETS=['./','./index.html','./styles.css?v=20261116-palette9','./app.js?v=20261116-palette9','./market.js?v=20261106-index-cards','./holidays.js','./races.js','./data/holidays.json','./data/races.json','./manifest.webmanifest','./icon-warm-192.png','./icon-warm-512.png'];
+const CACHE='nagame-calendar-static-v14-today-contrast';
+const ASSETS=['./','./index.html','./styles.css?v=20261123-today-contrast','./app.js?v=20261116-palette9','./market.js?v=20261106-index-cards','./holidays.js','./races.js','./data/holidays.json','./data/races.json','./manifest.webmanifest','./icon-warm-192.png','./icon-warm-512.png'];
 const paths=new Set(ASSETS.map(asset=>new URL(asset,self.registration.scope).pathname));
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
