@@ -207,7 +207,9 @@ button:focus-visible,input:focus-visible,select:focus-visible {
 .day:active:not(.empty) {
   background:#edf4ff}
 .day.today {
-  background:#f3f6ff}
+  /* 今日のセルを暖色で明確に区別 */
+  background:#fff0de;
+  box-shadow:inset 0 0 0 2px #a83612;}
 .day.is-sunday .day-number,.day.is-holiday .day-number {
   color:var(--red)}
 .day.is-saturday .day-number {
@@ -222,10 +224,12 @@ button:focus-visible,input:focus-visible,select:focus-visible {
   min-width:27px;
   width:27px;
   height:27px}
-.today .day-number {
-  background:var(--primary);
+.day.today .day-number {
+  background:#a83612;
   color:#fff!important;
-  border-radius:50%}
+  border-radius:50%;
+  font-weight:850;
+  box-shadow:0 1px 3px #84290e55;}
 /* 高さを制限せず、日本語は自然な位置で、長い英数字もセル内で折り返す。 */
 .holiday-label,.event-pill,.race-pill {
   min-width:0;
