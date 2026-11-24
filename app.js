@@ -151,7 +151,11 @@
   const openTitleGroups=new Set();
   let selectedDate=dateKey(TODAY());
   let editingEventId=null,editingTemplateId=null,eventColor='blue',templateColor='blue';
-  let rangeStart=monthDate(TODAY(),-6),rangeEnd=monthDate(TODAY(),17);
+  // 初回は今日の前後だけ描画。前後の月はスクロール時に順次追加する。
+  // 旧実装: 6か月前〜17か月後の24か月を起動時に一括生成。
+  const INITIAL_MONTHS_BEFORE=2,INITIAL_MONTHS_AFTER=4;
+  let rangeStart=monthDate(TODAY(),-INITIAL_MONTHS_BEFORE),
+      rangeEnd=monthDate(TODAY(),INITIAL_MONTHS_AFTER);
   let undoIds=[],toastTimer=0,scrollFrame=0;
 
   function store() {
@@ -322,7 +326,8 @@
     if(screenMode==='records')lastRecordMonth=mk;
     const targetDate=dateFromKey(mk+'-01');
     if(!el('month-'+mk)) {
-      rangeStart=monthDate(targetDate,-6);rangeEnd=monthDate(targetDate,17);
+      rangeStart=monthDate(targetDate,-INITIAL_MONTHS_BEFORE);
+      rangeEnd=monthDate(targetDate,INITIAL_MONTHS_AFTER);
       buildCalendar();
     }
     const target=el('month-'+mk);
@@ -900,9 +905,19 @@
 
   buildCalendar();chooseEventColor('blue');chooseTemplateColor('blue');chooseRecordColor('blue');
   renderOfficialStatus();
-  if(location.protocol!=='file:')refreshOfficialData();
+  // 最初のカレンダー表示後に公式日程の通信を行い、初期描画と競合させない。
+  // 内蔵データ・保存済みデータは通信前から表示する。
   requestAnimationFrame(()=>scrollToMonth(monthKey(TODAY()),'instant'));
-  if('serviceWorker' in navigator && location.protocol!=='file:'){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('オフライン準備に失敗',err)));
+  if(location.protocol!=='file:'){
+    window.addEventListener('load',()=>{
+      if('requestIdleCallback' in window){
+        window.requestIdleCallback(()=>refreshOfficialData(),{timeout:2500});
+      }else{
+        setTimeout(()=>refreshOfficialData(),650);
+      }
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('オフライン準備に失敗',err));
+      }
+    },{once:true});
   }
 })();
